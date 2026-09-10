@@ -1,9 +1,11 @@
 const Post = require("../models/Post");
+const User = require("../models/User");
+const PhotographerProfile = require("../models/PhotographerProfile");
 
-
-// ===============================
+// ======================================================
 // CREATE POST
-// ===============================
+// ======================================================
+
 const createPost = async (req, res) => {
     try {
         const {
@@ -24,28 +26,22 @@ const createPost = async (req, res) => {
             imageUrl,
             caption: caption || "",
             location: location || "",
-            category: category || "OTHER",
-            likes: []
+            category: category || "OTHER"
         });
 
-        const populatedPost =
-            await Post
-                .findById(post._id)
-                .populate(
-                    "photographer",
-                    "name email phone profileImage"
-                );
+        const populatedPost = await Post.findById(post._id)
+            .populate(
+                "photographer",
+                "name email profileImage"
+            );
 
         res.status(201).json({
-            message: "Post created successfully",
+            message: "Photo posted successfully",
             post: populatedPost
         });
 
     } catch (error) {
-        console.error(
-            "Create Post Error:",
-            error.message
-        );
+        console.error("Create Post Error:", error.message);
 
         res.status(500).json({
             message: "Server error"
@@ -54,34 +50,60 @@ const createPost = async (req, res) => {
 };
 
 
-// ===============================
-// GET ALL POSTS
-// ===============================
+// ======================================================
+// GET ALL POSTS - CLIENT EXPLORE
+// ======================================================
+
 const getAllPosts = async (req, res) => {
     try {
-        const posts =
-            await Post
-                .find()
-                .populate(
-                    "photographer",
-                    "name email phone profileImage"
-                )
-                .sort({
-                    createdAt: -1
-                });
+        const posts = await Post.find()
+            .populate(
+                "photographer",
+                "name email profileImage"
+            )
+            .sort({
+                createdAt: -1
+            });
+
+        const postsWithProfiles = await Promise.all(
+            posts.map(async (post) => {
+
+                const profile =
+                    await PhotographerProfile.findOne({
+                        user: post.photographer._id
+                    });
+
+                return {
+                    ...post.toObject(),
+
+                    photographerProfile: profile
+                        ? {
+                              _id: profile._id,
+                              location: profile.location,
+                              specialization:
+                                  profile.specialization,
+                              experience:
+                                  profile.experience,
+                              pricePerEvent:
+                                  profile.pricePerEvent,
+                              phone: profile.phone,
+                              profileImage:
+                                  profile.profileImage,
+                              isAvailable:
+                                  profile.isAvailable
+                          }
+                        : null
+                };
+            })
+        );
 
         res.status(200).json({
-            message:
-                "Posts fetched successfully",
-            count: posts.length,
-            posts
+            count: postsWithProfiles.length,
+            posts: postsWithProfiles
         });
 
     } catch (error) {
-        console.error(
-            "Get All Posts Error:",
-            error.message
-        );
+        console.error("Get All Posts Error:", error.message);
 
         res.status(500).json({
             message: "Server error"
@@ -90,31 +112,26 @@ const getAllPosts = async (req, res) => {
 };
 
 
-// ===============================
-// GET PHOTOGRAPHER POSTS
-// ===============================
+// ======================================================
+// GET POSTS OF ONE PHOTOGRAPHER
+// ======================================================
+
 const getPhotographerPosts = async (req, res) => {
     try {
-        const {
-            photographerId
-        } = req.params;
+        const { photographerId } = req.params;
 
-        const posts =
-            await Post
-                .find({
-                    photographer: photographerId
-                })
-                .populate(
-                    "photographer",
-                    "name email phone profileImage"
-                )
-                .sort({
-                    createdAt: -1
-                });
+        const posts = await Post.find({
+            photographer: photographerId
+        })
+            .populate(
+                "photographer",
+                "name email profileImage"
+            )
+            .sort({
+                createdAt: -1
+            });
 
         res.status(200).json({
-            message:
-                "Photographer posts fetched successfully",
             count: posts.length,
             posts
         });
@@ -132,17 +149,15 @@ const getPhotographerPosts = async (req, res) => {
 };
 
 
-// ===============================
+// ======================================================
 // LIKE / UNLIKE POST
-// ===============================
+// ======================================================
+
 const toggleLike = async (req, res) => {
     try {
-        const {
-            postId
-        } = req.params;
+        const { postId } = req.params;
 
-        const post =
-            await Post.findById(postId);
+        const post = await Post.findById(postId);
 
         if (!post) {
             return res.status(404).json({
@@ -150,50 +165,35 @@ const toggleLike = async (req, res) => {
             });
         }
 
-        const userId =
-            req.user.userId.toString();
+        const userId = req.user.userId;
 
-        const alreadyLiked =
-            post.likes.some(
-                id => id.toString() === userId
-            );
+        const alreadyLiked = post.likes.some(
+            (id) => id.toString() === userId.toString()
+        );
 
         if (alreadyLiked) {
-
-            post.likes =
-                post.likes.filter(
-                    id =>
-                        id.toString() !== userId
-                );
-
-        } else {
-
-            post.likes.push(
-                req.user.userId
+            post.likes = post.likes.filter(
+                (id) =>
+                    id.toString() !== userId.toString()
             );
+        } else {
+            post.likes.push(userId);
         }
 
         await post.save();
 
         res.status(200).json({
             message: alreadyLiked
-                ? "Post unliked successfully"
-                : "Post liked successfully",
+                ? "Post unliked"
+                : "Post liked",
 
-            liked: !alreadyLiked,
+            likesCount: post.likes.length,
 
-            likesCount:
-                post.likes.length,
-
-            likes:
-                post.likes
+            liked: !alreadyLiked
         });
 
     } catch (error) {
-        console.error(
-            "Toggle Like Error:",
-            error.message
-        );
+        console.error("Toggle Like Error:", error.message);
 
         res.status(500).json({
             message: "Server error"
@@ -201,6 +201,10 @@ const toggleLike = async (req, res) => {
     }
 };
 
+
+// ======================================================
+// EXPORT
+// ======================================================
 
 module.exports = {
     createPost,

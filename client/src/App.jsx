@@ -19,13 +19,11 @@ import PhotographerDashboard
 import EditPhotographerProfile
     from "./pages/EditPhotographerProfile";
 
-
 import {
     getAllPosts,
     getPhotographers,
     toggleLike
 } from "./api/api";
-
 
 import "./App.css";
 
@@ -41,12 +39,10 @@ function App() {
             !!localStorage.getItem("token")
         );
 
-
     const [role, setRole] =
         useState(
             localStorage.getItem("role")
         );
-
 
     const [showSignup, setShowSignup] =
         useState(false);
@@ -59,14 +55,11 @@ function App() {
     const [showMyBookings, setShowMyBookings] =
         useState(false);
 
-
     const [showDashboard, setShowDashboard] =
         useState(false);
 
-
     const [showEditProfile, setShowEditProfile] =
         useState(false);
-
 
     const [
         selectedPhotographer,
@@ -81,17 +74,22 @@ function App() {
     const [posts, setPosts] =
         useState([]);
 
-
     const [photographers, setPhotographers] =
         useState([]);
-
 
     const [loading, setLoading] =
         useState(true);
 
-
     const [error, setError] =
         useState("");
+
+
+    /* =================================================
+       EXPLORE POST
+    ================================================= */
+
+    const [selectedPost, setSelectedPost] =
+        useState(null);
 
 
     /* =================================================
@@ -101,18 +99,14 @@ function App() {
     const [searchText, setSearchText] =
         useState("");
 
-
     const [priceFilter, setPriceFilter] =
         useState("ALL");
-
 
     const [locationFilter, setLocationFilter] =
         useState("");
 
-
     const [typeFilter, setTypeFilter] =
         useState("ALL");
-
 
     const [showFilters, setShowFilters] =
         useState(false);
@@ -152,6 +146,29 @@ function App() {
         setShowEditProfile(false);
 
         setSelectedPhotographer(null);
+        setSelectedPost(null);
+
+    };
+
+
+    /* =================================================
+       OPEN EXPLORE POST
+    ================================================= */
+
+    const handleOpenPost = (post) => {
+
+        setSelectedPost(post);
+
+    };
+
+
+    /* =================================================
+       CLOSE EXPLORE POST
+    ================================================= */
+
+    const handleClosePost = () => {
+
+        setSelectedPost(null);
 
     };
 
@@ -194,20 +211,37 @@ function App() {
 
 
                 /* -------------------------------------
-                   EXISTING POSTS API
+                   GET ALL POSTS
                 ------------------------------------- */
 
                 const postsData =
                     await getAllPosts(token);
 
 
-                setPosts(
-                    postsData.posts || []
-                );
+                /*
+                   Sort latest → oldest
+
+                   Newest post will appear first.
+                */
+
+                const sortedPosts =
+                    [...(postsData.posts || [])]
+                        .sort(
+                            (a, b) =>
+                                new Date(
+                                    b.createdAt
+                                ) -
+                                new Date(
+                                    a.createdAt
+                                )
+                        );
+
+
+                setPosts(sortedPosts);
 
 
                 /* -------------------------------------
-                   EXISTING PHOTOGRAPHER API
+                   GET PHOTOGRAPHERS
                 ------------------------------------- */
 
                 if (role === "CLIENT") {
@@ -474,7 +508,7 @@ function App() {
 
 
     /* =================================================
-       CHECK WHETHER FILTER IS ACTIVE
+       CHECK FILTER ACTIVE
     ================================================= */
 
     const filtersActive =
@@ -533,6 +567,36 @@ function App() {
 
             );
 
+
+            /*
+               Also update the selected
+               Explore post if it is open.
+            */
+
+            setSelectedPost(
+                previousPost => {
+
+                    if (
+                        !previousPost ||
+                        previousPost._id !== postId
+                    ) {
+
+                        return previousPost;
+
+                    }
+
+
+                    return {
+                        ...previousPost,
+                        likes:
+                            data.likes ||
+                            previousPost.likes
+                    };
+
+                }
+            );
+
+
         } catch (error) {
 
             console.error(
@@ -546,7 +610,7 @@ function App() {
 
 
     /* =================================================
-       VIEW PROFILE
+       VIEW PHOTOGRAPHER PROFILE
     ================================================= */
 
     const handleViewProfile = (
@@ -564,6 +628,8 @@ function App() {
         setShowDashboard(false);
 
         setShowEditProfile(false);
+
+        setSelectedPost(null);
 
 
         setSelectedPhotographer(
@@ -639,6 +705,7 @@ function App() {
                     onSignup={() =>
                         setShowSignup(false)
                     }
+
                     onBackToLogin={() =>
                         setShowSignup(false)
                     }
@@ -655,6 +722,7 @@ function App() {
                 onLogin={
                     handleLogin
                 }
+
                 onSignup={() =>
                     setShowSignup(true)
                 }
@@ -680,6 +748,7 @@ function App() {
                 photographer={
                     selectedPhotographer
                 }
+
                 onBack={
                     handleBackFromProfile
                 }
@@ -764,11 +833,13 @@ function App() {
 
         <div className="app">
 
+
             {/* =========================================
                 NAVBAR
             ========================================= */}
 
             <nav className="main-navbar">
+
 
                 <div className="navbar-logo">
 
@@ -785,13 +856,21 @@ function App() {
 
                 <div className="navbar-actions">
 
+
+                    {/* CLIENT BOOKINGS */}
+
                     {role === "CLIENT" && (
 
                         <button
                             className="nav-button"
+
                             onClick={() => {
 
                                 setSelectedPhotographer(
+                                    null
+                                );
+
+                                setSelectedPost(
                                     null
                                 );
 
@@ -802,12 +881,14 @@ function App() {
                             }}
                         >
 
-                             My Bookings
+                            My Bookings
 
                         </button>
 
                     )}
 
+
+                    {/* PHOTOGRAPHER NAVIGATION */}
 
                     {role === "PHOTOGRAPHER" && (
 
@@ -815,6 +896,7 @@ function App() {
 
                             <button
                                 className="nav-button"
+
                                 onClick={() => {
 
                                     setShowEditProfile(
@@ -835,6 +917,7 @@ function App() {
 
                             <button
                                 className="nav-button"
+
                                 onClick={() => {
 
                                     setShowDashboard(
@@ -857,8 +940,11 @@ function App() {
                     )}
 
 
+                    {/* LOGOUT */}
+
                     <button
                         className="logout-button"
+
                         onClick={
                             handleLogout
                         }
@@ -867,6 +953,7 @@ function App() {
                         Logout
 
                     </button>
+
 
                 </div>
 
@@ -897,6 +984,7 @@ function App() {
 
                             Find the perfect
                             <br />
+
                             photographer.
 
                         </h1>
@@ -915,6 +1003,10 @@ function App() {
                 </section>
 
 
+                {/* =====================================
+                    ERROR
+                ===================================== */}
+
                 {error && (
 
                     <div className="home-error">
@@ -926,9 +1018,466 @@ function App() {
                 )}
 
 
-                {/* =====================================
-                    PHOTOGRAPHERS
-                ===================================== */}
+                {/* =================================================
+                    INSTAGRAM STYLE EXPLORE
+                ================================================= */}
+
+                {role === "CLIENT" && (
+
+                    <section className="explore-section">
+
+
+                        <div className="explore-header">
+
+                            <div>
+
+                                <span className="explore-eyebrow">
+                                    DISCOVER PHOTOGRAPHERS
+                                </span>
+
+                                <h2>
+                                    Explore
+                                </h2>
+
+                                <p>
+                                    Discover the latest moments
+                                    captured by photographers.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        {loading ? (
+
+                            <div className="explore-empty">
+
+                                <div className="explore-empty-icon">
+                                    ⏳
+                                </div>
+
+                                <h3>
+                                    Loading photos...
+                                </h3>
+
+                                <p>
+                                    Discovering the latest
+                                    photographer moments.
+                                </p>
+
+                            </div>
+
+                        ) : posts.length === 0 ? (
+
+                            <div className="explore-empty">
+
+                                <div className="explore-empty-icon">
+                                    ✦
+                                </div>
+
+                                <h3>
+                                    No photos yet
+                                </h3>
+
+                                <p>
+                                    Photographers haven't shared
+                                    their work yet.
+                                </p>
+
+                            </div>
+
+                        ) : (
+
+                            <div className="explore-grid">
+
+                                {posts.map(
+                                    post => (
+
+                                        <button
+                                            key={
+                                                post._id
+                                            }
+
+                                            className="explore-grid-item"
+
+                                            onClick={() =>
+                                                handleOpenPost(
+                                                    post
+                                                )
+                                            }
+                                        >
+
+                                            <img
+                                                src={
+                                                    post.imageUrl
+                                                }
+
+                                                alt={
+                                                    post.caption ||
+                                                    "Photography"
+                                                }
+                                            />
+
+
+                                            <div className="explore-grid-overlay">
+
+                                                <span>
+
+                                                    ♥{" "}
+
+                                                    {
+                                                        post.likes?.length ||
+                                                        0
+                                                    }
+
+                                                </span>
+
+
+                                                <span>
+
+                                                    {
+                                                        post.category ||
+                                                        "Photography"
+                                                    }
+
+                                                </span>
+
+                                            </div>
+
+                                        </button>
+
+                                    )
+                                )}
+
+                            </div>
+
+                        )}
+
+                    </section>
+
+                )}
+
+
+                {/* =================================================
+                    EXPLORE PHOTO MODAL
+                ================================================= */}
+
+                {selectedPost && (
+
+                    <div
+                        className="explore-modal-backdrop"
+
+                        onClick={
+                            handleClosePost
+                        }
+                    >
+
+
+                        <div
+                            className="explore-modal"
+
+                            onClick={(e) =>
+                                e.stopPropagation()
+                            }
+                        >
+
+
+                            {/* CLOSE */}
+
+                            <button
+                                className="explore-modal-close"
+
+                                onClick={
+                                    handleClosePost
+                                }
+                            >
+
+                                ×
+
+                            </button>
+
+
+                            {/* =================================
+                                IMAGE
+                            ================================= */}
+
+                            <div className="explore-modal-image">
+
+                                <img
+                                    src={
+                                        selectedPost.imageUrl
+                                    }
+
+                                    alt={
+                                        selectedPost.caption ||
+                                        "Photography"
+                                    }
+                                />
+
+                            </div>
+
+
+                            {/* =================================
+                                DETAILS
+                            ================================= */}
+
+                            <div className="explore-modal-details">
+
+
+                                {/* ---------------------------------
+                                    PHOTOGRAPHER
+                                --------------------------------- */}
+
+                                <div className="modal-photographer">
+
+
+                                    <div className="modal-photographer-avatar">
+
+                                        {selectedPost
+                                            .photographer
+                                            ?.profileImage ? (
+
+                                            <img
+                                                src={
+                                                    selectedPost
+                                                        .photographer
+                                                        .profileImage
+                                                }
+
+                                                alt=""
+                                            />
+
+                                        ) : (
+
+                                            <span>
+
+                                                {
+                                                    selectedPost
+                                                        .photographer
+                                                        ?.name
+                                                        ?.charAt(0)
+                                                        ?.toUpperCase() ||
+                                                    "P"
+                                                }
+
+                                            </span>
+
+                                        )}
+
+                                    </div>
+
+
+                                    <div className="modal-photographer-info">
+
+                                        <strong>
+
+                                            {
+                                                selectedPost
+                                                    .photographer
+                                                    ?.name ||
+                                                "Photographer"
+                                            }
+
+                                        </strong>
+
+
+                                        <span>
+
+                                            {
+                                                selectedPost
+                                                    .photographerProfile
+                                                    ?.specialization ||
+                                                selectedPost.category ||
+                                                "Photography"
+                                            }
+
+                                        </span>
+
+                                    </div>
+
+
+                                    {/* VIEW PROFILE */}
+
+                                    <button
+                                        className="modal-profile-button"
+
+                                        onClick={() => {
+
+                                            const photographer =
+                                                photographers.find(
+                                                    item =>
+                                                        item.user?._id ===
+                                                        selectedPost
+                                                            .photographer
+                                                            ?._id
+                                                );
+
+
+                                            if (
+                                                photographer
+                                            ) {
+
+                                                handleClosePost();
+
+                                                handleViewProfile(
+                                                    photographer
+                                                );
+
+                                            }
+
+                                        }}
+                                    >
+
+                                        View Profile
+
+                                    </button>
+
+                                </div>
+
+
+                                {/* ---------------------------------
+                                    CAPTION
+                                --------------------------------- */}
+
+                                {selectedPost.caption && (
+
+                                    <div className="modal-caption">
+
+                                        <strong>
+
+                                            {
+                                                selectedPost
+                                                    .photographer
+                                                    ?.name ||
+                                                "Photographer"
+                                            }
+
+                                        </strong>
+
+                                        {" "}
+
+                                        {
+                                            selectedPost.caption
+                                        }
+
+                                    </div>
+
+                                )}
+
+
+                                {/* ---------------------------------
+                                    LOCATION
+                                --------------------------------- */}
+
+                                {selectedPost.location && (
+
+                                    <div className="modal-location">
+
+                                        <span>
+                                            ◉
+                                        </span>
+
+                                        {
+                                            selectedPost.location
+                                        }
+
+                                    </div>
+
+                                )}
+
+
+                                {/* ---------------------------------
+                                    CATEGORY
+                                --------------------------------- */}
+
+                                <div className="modal-category">
+
+                                    #
+                                    {
+                                        selectedPost.category ||
+                                        "Photography"
+                                    }
+
+                                </div>
+
+
+                                {/* ---------------------------------
+                                    LIKES
+                                --------------------------------- */}
+
+                                <div className="modal-likes">
+
+                                    ♥{" "}
+
+                                    {
+                                        selectedPost
+                                            .likes
+                                            ?.length ||
+                                        0
+                                    }
+
+                                    {" "}
+                                    likes
+
+                                </div>
+
+
+                                {/* ---------------------------------
+                                    BOOK BUTTON
+                                --------------------------------- */}
+
+                                <button
+                                    className="modal-book-button"
+
+                                    onClick={() => {
+
+                                        const photographer =
+                                            photographers.find(
+                                                item =>
+                                                    item.user?._id ===
+                                                    selectedPost
+                                                        .photographer
+                                                        ?._id
+                                            );
+
+
+                                        if (
+                                            photographer
+                                        ) {
+
+                                            handleClosePost();
+
+                                            handleViewProfile(
+                                                photographer
+                                            );
+
+                                        }
+
+                                    }}
+                                >
+
+                                    View Photographer & Book
+
+                                    <span>
+                                        →
+                                    </span>
+
+                                </button>
+
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                )}
+
+
+                {/* =================================================
+                    CLIENT PHOTOGRAPHER SEARCH
+                ================================================= */}
 
                 {role === "CLIENT" && (
 
@@ -976,10 +1525,13 @@ function App() {
 
                                 <input
                                     type="text"
+
                                     placeholder="Search photographer by name..."
+
                                     value={
                                         searchText
                                     }
+
                                     onChange={(e) =>
                                         setSearchText(
                                             e.target.value
@@ -992,11 +1544,14 @@ function App() {
 
                                     <button
                                         className="search-clear-button"
+
                                         onClick={() =>
                                             setSearchText("")
                                         }
                                     >
+
                                         ×
+
                                     </button>
 
                                 )}
@@ -1010,6 +1565,7 @@ function App() {
                                         ? "active"
                                         : ""
                                 }`}
+
                                 onClick={() =>
                                     setShowFilters(
                                         !showFilters
@@ -1019,10 +1575,13 @@ function App() {
 
                                 ⚙ Filters
 
+
                                 {filtersActive && (
 
                                     <span className="filter-count">
+
                                         !
+
                                     </span>
 
                                 )}
@@ -1054,6 +1613,7 @@ function App() {
                                         value={
                                             priceFilter
                                         }
+
                                         onChange={(e) =>
                                             setPriceFilter(
                                                 e.target.value
@@ -1097,10 +1657,13 @@ function App() {
 
                                     <input
                                         type="text"
+
                                         placeholder="Example: Madurai"
+
                                         value={
                                             locationFilter
                                         }
+
                                         onChange={(e) =>
                                             setLocationFilter(
                                                 e.target.value
@@ -1124,6 +1687,7 @@ function App() {
                                         value={
                                             typeFilter
                                         }
+
                                         onChange={(e) =>
                                             setTypeFilter(
                                                 e.target.value
@@ -1170,6 +1734,7 @@ function App() {
 
                                     <button
                                         className="clear-filters-button"
+
                                         onClick={
                                             clearFilters
                                         }
@@ -1196,11 +1761,15 @@ function App() {
 
                                 <span>
 
-                                    {filteredPhotographers.length}{" "}
+                                    {
+                                        filteredPhotographers.length
+                                    }{" "}
 
-                                    {filteredPhotographers.length === 1
-                                        ? "photographer"
-                                        : "photographers"}{" "}
+                                    {
+                                        filteredPhotographers.length === 1
+                                            ? "photographer"
+                                            : "photographers"
+                                    }{" "}
 
                                     found
 
@@ -1262,6 +1831,7 @@ function App() {
 
                                     <button
                                         className="empty-clear-button"
+
                                         onClick={
                                             clearFilters
                                         }
@@ -1302,6 +1872,7 @@ function App() {
 
                                             <div
                                                 className="photographer-card"
+
                                                 key={
                                                     photographer._id
                                                 }
@@ -1318,6 +1889,7 @@ function App() {
                                                             src={
                                                                 image
                                                             }
+
                                                             alt={
                                                                 name
                                                             }
@@ -1327,9 +1899,11 @@ function App() {
 
                                                         <div className="photographer-card-placeholder">
 
-                                                            {name
-                                                                .charAt(0)
-                                                                .toUpperCase()}
+                                                            {
+                                                                name
+                                                                    .charAt(0)
+                                                                    .toUpperCase()
+                                                            }
 
                                                         </div>
 
@@ -1363,8 +1937,10 @@ function App() {
 
                                                         📷{" "}
 
-                                                        {photographer.specialization ||
-                                                            "Photography"}
+                                                        {
+                                                            photographer.specialization ||
+                                                            "Photography"
+                                                        }
 
                                                     </p>
 
@@ -1373,8 +1949,10 @@ function App() {
 
                                                         📍{" "}
 
-                                                        {photographer.location ||
-                                                            "Location not specified"}
+                                                        {
+                                                            photographer.location ||
+                                                            "Location not specified"
+                                                        }
 
                                                     </p>
 
@@ -1392,12 +1970,14 @@ function App() {
                                                             <strong>
 
                                                                 ₹
-                                                                {(
-                                                                    photographer.pricePerEvent ||
-                                                                    0
-                                                                ).toLocaleString(
-                                                                    "en-IN"
-                                                                )}
+                                                                {
+                                                                    (
+                                                                        photographer.pricePerEvent ||
+                                                                        0
+                                                                    ).toLocaleString(
+                                                                        "en-IN"
+                                                                    )
+                                                                }
 
                                                             </strong>
 
@@ -1406,6 +1986,7 @@ function App() {
 
                                                         <button
                                                             className="view-profile-button"
+
                                                             onClick={() =>
                                                                 handleViewProfile(
                                                                     photographer
@@ -1437,9 +2018,9 @@ function App() {
                 )}
 
 
-                {/* =====================================
+                {/* =================================================
                     LATEST MOMENTS
-                ===================================== */}
+                ================================================= */}
 
                 <section className="moments-section">
 
@@ -1514,6 +2095,7 @@ function App() {
 
                                     <div
                                         className="moment-card"
+
                                         key={
                                             post._id
                                         }
@@ -1525,6 +2107,7 @@ function App() {
                                                 src={
                                                     post.imageUrl
                                                 }
+
                                                 alt={
                                                     post.caption ||
                                                     "Photography"
@@ -1538,8 +2121,10 @@ function App() {
 
                                             <p>
 
-                                                {post.caption ||
-                                                    "Beautiful moment"}
+                                                {
+                                                    post.caption ||
+                                                    "Beautiful moment"
+                                                }
 
                                             </p>
 
@@ -1556,8 +2141,10 @@ function App() {
 
                                                     ❤️{" "}
 
-                                                    {post.likes?.length ||
-                                                        0}
+                                                    {
+                                                        post.likes?.length ||
+                                                        0
+                                                    }
 
                                                 </button>
 
@@ -1566,8 +2153,10 @@ function App() {
 
                                                     📍{" "}
 
-                                                    {post.location ||
-                                                        "India"}
+                                                    {
+                                                        post.location ||
+                                                        "India"
+                                                    }
 
                                                 </span>
 
@@ -1585,6 +2174,7 @@ function App() {
                     )}
 
                 </section>
+
 
             </main>
 

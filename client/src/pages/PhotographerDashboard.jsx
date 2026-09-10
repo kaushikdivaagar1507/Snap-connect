@@ -1,77 +1,68 @@
 import { useEffect, useState } from "react";
 
 import {
+    createPost,
     getPhotographerBookings,
+    getMyPhotographerProfile,
     acceptBooking,
     rejectBooking
 } from "../api/api";
 
+function PhotographerDashboard() {
 
-function PhotographerDashboard({ onBack }) {
+    const [bookings, setBookings] = useState([]);
 
-    const [bookings, setBookings] =
-        useState([]);
+    const [profile, setProfile] = useState(null);
 
-    const [loading, setLoading] =
-        useState(true);
+    const [loading, setLoading] = useState(true);
 
-    const [actionLoading, setActionLoading] =
-        useState(null);
+    const [postLoading, setPostLoading] =
+        useState(false);
 
-    const [error, setError] =
+    const [postMessage, setPostMessage] =
         useState("");
 
-    const [success, setSuccess] =
+    const [postError, setPostError] =
         useState("");
 
+    const [postData, setPostData] = useState({
+        imageUrl: "",
+        caption: "",
+        location: "",
+        category: "WEDDING"
+    });
 
-    const fetchBookings = async () => {
+
+    // ==================================================
+    // LOAD DASHBOARD
+    // ==================================================
+
+    const loadDashboard = async () => {
 
         try {
-
-            setLoading(true);
-            setError("");
 
             const token =
                 localStorage.getItem("token");
 
-
-            if (!token) {
-
-                setError(
-                    "Please login again."
-                );
-
-                return;
-            }
-
-
-            const data =
-                await getPhotographerBookings(
-                    token
-                );
-
-
-            console.log(
-                "📦 Photographer Bookings:",
-                data
-            );
-
+            const bookingData =
+                await getPhotographerBookings(token);
 
             setBookings(
-                data.bookings || []
+                bookingData.bookings || []
             );
 
-        } catch (err) {
+            const profileData =
+                await getMyPhotographerProfile(token);
+
+            setProfile(
+                profileData.profile
+            );
+
+        } catch (error) {
 
             console.error(
-                "Fetch Bookings Error:",
-                err
-            );
-
-            setError(
-                err.message ||
-                "Failed to load bookings"
+                "Dashboard Error:",
+                error
             );
 
         } finally {
@@ -79,188 +70,172 @@ function PhotographerDashboard({ onBack }) {
             setLoading(false);
 
         }
-
     };
 
 
     useEffect(() => {
 
-        fetchBookings();
+        loadDashboard();
 
     }, []);
 
 
-    const handleAccept = async (
-        bookingId
-    ) => {
+    // ==================================================
+    // FORM CHANGE
+    // ==================================================
+
+    const handlePostChange = (e) => {
+
+        const {
+            name,
+            value
+        } = e.target;
+
+        setPostData((previous) => ({
+            ...previous,
+            [name]: value
+        }));
+
+    };
+
+
+    // ==================================================
+    // CREATE POST
+    // ==================================================
+
+    const handleCreatePost = async (e) => {
+
+        e.preventDefault();
+
+        setPostMessage("");
+        setPostError("");
+
+        if (!postData.imageUrl.trim()) {
+
+            setPostError(
+                "Please enter the photo URL."
+            );
+
+            return;
+        }
 
         try {
 
-            setActionLoading(
-                bookingId
-            );
-
-            setError("");
-            setSuccess("");
-
+            setPostLoading(true);
 
             const token =
                 localStorage.getItem("token");
 
-
-            await acceptBooking(
+            await createPost(
                 token,
-                bookingId
+                postData
             );
 
-
-            setSuccess(
-                "Booking accepted successfully! 🎉"
+            setPostMessage(
+                "Your photo was posted successfully."
             );
 
+            setPostData({
+                imageUrl: "",
+                caption: "",
+                location: "",
+                category: "WEDDING"
+            });
 
-            await fetchBookings();
-
-        } catch (err) {
+        } catch (error) {
 
             console.error(
-                "Accept Booking Error:",
-                err
+                "Create Post Error:",
+                error
             );
 
-            setError(
-                err.message ||
-                "Failed to accept booking"
+            setPostError(
+                error.message ||
+                "Failed to create post."
             );
 
         } finally {
 
-            setActionLoading(null);
+            setPostLoading(false);
 
         }
 
     };
 
 
-    const handleReject = async (
-        bookingId
+    // ==================================================
+    // BOOKING ACTION
+    // ==================================================
+
+    const handleBookingAction = async (
+        bookingId,
+        action
     ) => {
 
         try {
 
-            setActionLoading(
-                bookingId
-            );
-
-            setError("");
-            setSuccess("");
-
-
             const token =
                 localStorage.getItem("token");
 
+            if (action === "accept") {
 
-            await rejectBooking(
-                token,
-                bookingId
-            );
+                await acceptBooking(
+                    token,
+                    bookingId
+                );
 
+            } else {
 
-            setSuccess(
-                "Booking rejected."
-            );
+                await rejectBooking(
+                    token,
+                    bookingId
+                );
 
-
-            await fetchBookings();
-
-        } catch (err) {
-
-            console.error(
-                "Reject Booking Error:",
-                err
-            );
-
-            setError(
-                err.message ||
-                "Failed to reject booking"
-            );
-
-        } finally {
-
-            setActionLoading(null);
-
-        }
-
-    };
-
-
-    const formatDate = (date) => {
-
-        if (!date) {
-            return "Not specified";
-        }
-
-        return new Date(
-            date
-        ).toLocaleDateString(
-            "en-IN",
-            {
-                day: "2-digit",
-                month: "short",
-                year: "numeric"
             }
-        );
+
+            loadDashboard();
+
+        } catch (error) {
+
+            console.error(
+                "Booking Action Error:",
+                error
+            );
+
+        }
 
     };
 
 
-    const pendingBookings =
+    // ==================================================
+    // STATS
+    // ==================================================
+
+    const pendingCount =
         bookings.filter(
-            booking =>
+            (booking) =>
                 booking.status === "PENDING"
-        );
+        ).length;
 
-
-    const confirmedBookings =
+    const confirmedCount =
         bookings.filter(
-            booking =>
+            (booking) =>
                 booking.status === "CONFIRMED"
-        );
+        ).length;
 
-
-    const rejectedBookings =
+    const rejectedCount =
         bookings.filter(
-            booking =>
+            (booking) =>
                 booking.status === "REJECTED"
-        );
+        ).length;
 
 
     if (loading) {
 
         return (
-
-            <div className="dashboard-page">
-
-                <button
-                    className="back-button"
-                    onClick={onBack}
-                >
-                    ← Back
-                </button>
-
-
-                <div className="dashboard-loading">
-
-                    <div className="loading-spinner"></div>
-
-                    <p>
-                        Loading dashboard...
-                    </p>
-
-                </div>
-
+            <div className="dashboard-loading">
+                Loading dashboard...
             </div>
-
         );
 
     }
@@ -268,27 +243,31 @@ function PhotographerDashboard({ onBack }) {
 
     return (
 
-        <div className="dashboard-page">
+        <div className="photographer-dashboard">
+
+            {/* ==========================================
+                HEADER
+            ========================================== */}
 
             <div className="dashboard-header">
 
-                <button
-                    className="back-button"
-                    onClick={onBack}
-                >
-                    ← Back
-                </button>
-
-
                 <div>
 
+                    <p className="dashboard-eyebrow">
+                        PHOTOGRAPHER STUDIO
+                    </p>
+
                     <h1>
-                        Photographer Dashboard
+                        Welcome back
+                        {profile?.user?.name
+                            ? `, ${profile.user.name}`
+                            : ""}
                     </h1>
 
                     <p>
-                        Manage your photography
-                        bookings
+                        Manage your photography,
+                        showcase your work and handle
+                        client bookings.
                     </p>
 
                 </div>
@@ -296,111 +275,83 @@ function PhotographerDashboard({ onBack }) {
             </div>
 
 
-            {error && (
-
-                <div className="dashboard-error">
-
-                    {error}
-
-                </div>
-
-            )}
-
-
-            {success && (
-
-                <div className="dashboard-success">
-
-                    {success}
-
-                </div>
-
-            )}
-
-
-            {/* STATS */}
+            {/* ==========================================
+                STATS
+            ========================================== */}
 
             <div className="dashboard-stats">
 
-                <div className="dashboard-stat">
+                <div className="dashboard-stat-card">
 
-                    <span>
-                        📋
+                    <span className="stat-icon">
+                        ◉
                     </span>
 
                     <div>
-
                         <strong>
                             {bookings.length}
                         </strong>
 
-                        <p>
+                        <span>
                             Total Bookings
-                        </p>
-
+                        </span>
                     </div>
 
                 </div>
 
 
-                <div className="dashboard-stat">
+                <div className="dashboard-stat-card">
 
-                    <span>
-                        ⏳
+                    <span className="stat-icon">
+                        ◌
                     </span>
 
                     <div>
-
                         <strong>
-                            {pendingBookings.length}
+                            {pendingCount}
                         </strong>
 
-                        <p>
+                        <span>
                             Pending
-                        </p>
-
+                        </span>
                     </div>
 
                 </div>
 
 
-                <div className="dashboard-stat">
+                <div className="dashboard-stat-card">
 
-                    <span>
+                    <span className="stat-icon">
                         ✓
                     </span>
 
                     <div>
-
                         <strong>
-                            {confirmedBookings.length}
+                            {confirmedCount}
                         </strong>
 
-                        <p>
+                        <span>
                             Confirmed
-                        </p>
-
+                        </span>
                     </div>
 
                 </div>
 
 
-                <div className="dashboard-stat">
+                <div className="dashboard-stat-card">
 
-                    <span>
-                        ✕
+                    <span className="stat-icon">
+                        ×
                     </span>
 
                     <div>
-
                         <strong>
-                            {rejectedBookings.length}
+                            {rejectedCount}
                         </strong>
 
-                        <p>
+                        <span>
                             Rejected
-                        </p>
-
+                        </span>
                     </div>
 
                 </div>
@@ -408,405 +359,443 @@ function PhotographerDashboard({ onBack }) {
             </div>
 
 
-            {/* PENDING */}
+            {/* ==========================================
+                CREATE PHOTO POST
+            ========================================== */}
 
-            <section className="dashboard-section">
+            <section className="create-post-section">
 
-                <div className="section-title">
+                <div className="section-heading">
 
-                    <h2>
-                        Booking Requests
-                    </h2>
-
-                    <span>
-                        {pendingBookings.length}
-                    </span>
-
-                </div>
-
-
-                {pendingBookings.length === 0 ? (
-
-                    <div className="empty-dashboard">
-
-                        <div>
-                            📭
-                        </div>
-
-                        <h3>
-                            No pending requests
-                        </h3>
-
-                        <p>
-                            New client booking requests
-                            will appear here.
-                        </p>
-
-                    </div>
-
-                ) : (
-
-                    pendingBookings.map(
-                        booking => (
-
-                            <BookingCard
-                                key={booking._id}
-                                booking={booking}
-                                formatDate={formatDate}
-                                actionLoading={
-                                    actionLoading
-                                }
-                                handleAccept={
-                                    handleAccept
-                                }
-                                handleReject={
-                                    handleReject
-                                }
-                            />
-
-                        )
-                    )
-
-                )}
-
-            </section>
-
-
-            {/* CONFIRMED */}
-
-            <section className="dashboard-section">
-
-                <div className="section-title">
-
-                    <h2>
-                        Confirmed Bookings
-                    </h2>
-
-                    <span>
-                        {confirmedBookings.length}
-                    </span>
-
-                </div>
-
-
-                {confirmedBookings.length === 0 ? (
-
-                    <div className="empty-dashboard">
-
-                        <p>
-                            No confirmed bookings yet.
-                        </p>
-
-                    </div>
-
-                ) : (
-
-                    confirmedBookings.map(
-                        booking => (
-
-                            <BookingCard
-                                key={booking._id}
-                                booking={booking}
-                                formatDate={formatDate}
-                                actionLoading={
-                                    actionLoading
-                                }
-                                handleAccept={
-                                    handleAccept
-                                }
-                                handleReject={
-                                    handleReject
-                                }
-                            />
-
-                        )
-                    )
-
-                )}
-
-            </section>
-
-
-            {/* REJECTED */}
-
-            {rejectedBookings.length > 0 && (
-
-                <section className="dashboard-section">
-
-                    <div className="section-title">
-
-                        <h2>
-                            Rejected Bookings
-                        </h2>
+                    <div>
 
                         <span>
-                            {rejectedBookings.length}
+                            SHOWCASE YOUR WORK
                         </span>
+
+                        <h2>
+                            Create a new post
+                        </h2>
+
+                        <p>
+                            Share your best photography
+                            with clients on Explore.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <form
+                    className="create-post-form"
+                    onSubmit={handleCreatePost}
+                >
+
+                    <div className="post-form-left">
+
+                        <div className="post-image-preview">
+
+                            {postData.imageUrl ? (
+
+                                <img
+                                    src={
+                                        postData.imageUrl
+                                    }
+                                    alt="Preview"
+                                    onError={(e) => {
+                                        e.currentTarget.style.display =
+                                            "none";
+                                    }}
+                                />
+
+                            ) : (
+
+                                <div className="post-preview-empty">
+
+                                    <div>
+                                        ✦
+                                    </div>
+
+                                    <p>
+                                        Photo preview
+                                    </p>
+
+                                    <span>
+                                        Add an image URL
+                                        to preview it
+                                    </span>
+
+                                </div>
+
+                            )}
+
+                        </div>
 
                     </div>
 
 
-                    {rejectedBookings.map(
-                        booking => (
+                    <div className="post-form-right">
 
-                            <BookingCard
-                                key={booking._id}
-                                booking={booking}
-                                formatDate={formatDate}
-                                actionLoading={
-                                    actionLoading
+                        <div className="form-group">
+
+                            <label>
+                                Photo URL
+                            </label>
+
+                            <input
+                                type="url"
+                                name="imageUrl"
+                                placeholder="https://example.com/your-photo.jpg"
+                                value={
+                                    postData.imageUrl
                                 }
-                                handleAccept={
-                                    handleAccept
-                                }
-                                handleReject={
-                                    handleReject
+                                onChange={
+                                    handlePostChange
                                 }
                             />
 
-                        )
-                    )}
+                            <small>
+                                Use a direct image URL
+                                for your photography.
+                            </small>
 
-                </section>
-
-            )}
-
-        </div>
-
-    );
-
-}
+                        </div>
 
 
-/* =====================================================
-   BOOKING CARD
-===================================================== */
+                        <div className="form-group">
 
-function BookingCard({
-    booking,
-    formatDate,
-    actionLoading,
-    handleAccept,
-    handleReject
-}) {
+                            <label>
+                                Caption
+                            </label>
 
-    const client =
-        booking.client || {};
+                            <textarea
+                                name="caption"
+                                placeholder="Tell clients about this moment..."
+                                value={
+                                    postData.caption
+                                }
+                                onChange={
+                                    handlePostChange
+                                }
+                                rows="4"
+                            />
 
-
-    const clientName =
-        client.name ||
-        "Client";
-
-
-    return (
-
-        <div className="dashboard-booking-card">
-
-            <div className="dashboard-client">
-
-                <div className="client-avatar">
-
-                    {client.profileImage ? (
-
-                        <img
-                            src={
-                                client.profileImage
-                            }
-                            alt={
-                                clientName
-                            }
-                        />
-
-                    ) : (
-
-                        clientName
-                            .charAt(0)
-                            .toUpperCase()
-
-                    )}
-
-                </div>
+                        </div>
 
 
-                <div>
+                        <div className="post-form-row">
 
-                    <h3>
-                        {clientName}
-                    </h3>
+                            <div className="form-group">
 
-                    <p>
-                        {client.email ||
-                            "No email"}
-                    </p>
+                                <label>
+                                    Location
+                                </label>
 
-                </div>
+                                <input
+                                    type="text"
+                                    name="location"
+                                    placeholder="Madurai"
+                                    value={
+                                        postData.location
+                                    }
+                                    onChange={
+                                        handlePostChange
+                                    }
+                                />
 
-            </div>
-
-
-            <div className="dashboard-booking-details">
-
-                <div>
-
-                    <span>
-                        Event
-                    </span>
-
-                    <strong>
-                        {booking.eventType}
-                    </strong>
-
-                </div>
+                            </div>
 
 
-                <div>
+                            <div className="form-group">
 
-                    <span>
-                        Date
-                    </span>
+                                <label>
+                                    Category
+                                </label>
 
-                    <strong>
-                        {formatDate(
-                            booking.eventDate
+                                <select
+                                    name="category"
+                                    value={
+                                        postData.category
+                                    }
+                                    onChange={
+                                        handlePostChange
+                                    }
+                                >
+
+                                    <option value="WEDDING">
+                                        Wedding
+                                    </option>
+
+                                    <option value="CANDID">
+                                        Candid
+                                    </option>
+
+                                    <option value="PRE-WEDDING">
+                                        Pre-Wedding
+                                    </option>
+
+                                    <option value="PORTRAIT">
+                                        Portrait
+                                    </option>
+
+                                    <option value="FASHION">
+                                        Fashion
+                                    </option>
+
+                                    <option value="EVENT">
+                                        Event
+                                    </option>
+
+                                    <option value="OTHER">
+                                        Other
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                        </div>
+
+
+                        {postError && (
+
+                            <div className="dashboard-error">
+                                {postError}
+                            </div>
+
                         )}
-                    </strong>
-
-                </div>
 
 
-                <div>
+                        {postMessage && (
 
-                    <span>
-                        Location
-                    </span>
+                            <div className="dashboard-success">
+                                {postMessage}
+                            </div>
 
-                    <strong>
-                        📍{" "}
-                        {booking.eventLocation}
-                    </strong>
-
-                </div>
-
-
-                <div>
-
-                    <span>
-                        Price
-                    </span>
-
-                    <strong>
-                        ₹
-                        {(
-                            booking.price ||
-                            0
-                        ).toLocaleString(
-                            "en-IN"
                         )}
-                    </strong>
-
-                </div>
-
-            </div>
-
-
-            {booking.message && (
-
-                <div className="booking-client-message">
-
-                    <span>
-                        Client message
-                    </span>
-
-                    <p>
-                        "{booking.message}"
-                    </p>
-
-                </div>
-
-            )}
-
-
-            <div className="dashboard-card-footer">
-
-                <span
-                    className={`dashboard-status ${
-                        booking.status?.toLowerCase()
-                    }`}
-                >
-
-                    {booking.status ===
-                        "PENDING" &&
-                        "● Pending"}
-
-                    {booking.status ===
-                        "CONFIRMED" &&
-                        "✓ Confirmed"}
-
-                    {booking.status ===
-                        "REJECTED" &&
-                        "✕ Rejected"}
-
-                </span>
-
-
-                {booking.status ===
-                    "PENDING" && (
-
-                    <div className="booking-actions">
-
-                        <button
-                            className="accept-button"
-                            disabled={
-                                actionLoading ===
-                                booking._id
-                            }
-                            onClick={() =>
-                                handleAccept(
-                                    booking._id
-                                )
-                            }
-                        >
-
-                            {actionLoading ===
-                                booking._id
-                                ? "Processing..."
-                                : "✓ Accept"}
-
-                        </button>
 
 
                         <button
-                            className="reject-button"
-                            disabled={
-                                actionLoading ===
-                                booking._id
-                            }
-                            onClick={() =>
-                                handleReject(
-                                    booking._id
-                                )
-                            }
+                            type="submit"
+                            className="create-post-button"
+                            disabled={postLoading}
                         >
 
-                            {actionLoading ===
-                                booking._id
-                                ? "Processing..."
-                                : "✕ Reject"}
+                            {postLoading
+                                ? "Publishing..."
+                                : "Publish Photo"}
+
+                            {!postLoading && (
+                                <span>→</span>
+                            )}
 
                         </button>
+
+                    </div>
+
+                </form>
+
+            </section>
+
+
+            {/* ==========================================
+                BOOKINGS
+            ========================================== */}
+
+            <section className="dashboard-bookings-section">
+
+                <div className="section-heading">
+
+                    <div>
+
+                        <span>
+                            CLIENT REQUESTS
+                        </span>
+
+                        <h2>
+                            Booking requests
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                {bookings.length === 0 ? (
+
+                    <div className="empty-dashboard">
+                        No booking requests yet.
+                    </div>
+
+                ) : (
+
+                    <div className="booking-list">
+
+                        {bookings.map(
+                            (booking) => (
+
+                                <div
+                                    className="dashboard-booking-card"
+                                    key={
+                                        booking._id
+                                    }
+                                >
+
+                                    <div className="booking-client">
+
+                                        <div className="booking-avatar">
+                                            {booking.client?.name
+                                                ?.charAt(0)
+                                                ?.toUpperCase() ||
+                                                "C"}
+                                        </div>
+
+                                        <div>
+
+                                            <strong>
+                                                {
+                                                    booking
+                                                        .client
+                                                        ?.name
+                                                }
+                                            </strong>
+
+                                            <span>
+                                                {
+                                                    booking
+                                                        .client
+                                                        ?.email
+                                                }
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <div className="booking-details">
+
+                                        <span>
+                                            EVENT
+                                        </span>
+
+                                        <strong>
+                                            {
+                                                booking.eventType
+                                            }
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div className="booking-details">
+
+                                        <span>
+                                            DATE
+                                        </span>
+
+                                        <strong>
+                                            {new Date(
+                                                booking.eventDate
+                                            ).toLocaleDateString()}
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div className="booking-details">
+
+                                        <span>
+                                            LOCATION
+                                        </span>
+
+                                        <strong>
+                                            {
+                                                booking.eventLocation
+                                            }
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div className="booking-details">
+
+                                        <span>
+                                            PRICE
+                                        </span>
+
+                                        <strong>
+                                            ₹
+                                            {
+                                                booking.price
+                                            }
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div className="booking-actions">
+
+                                        {booking.status ===
+                                            "PENDING" ? (
+
+                                            <>
+
+                                                <button
+                                                    className="accept-booking-button"
+                                                    onClick={() =>
+                                                        handleBookingAction(
+                                                            booking._id,
+                                                            "accept"
+                                                        )
+                                                    }
+                                                >
+                                                    Accept
+                                                </button>
+
+                                                <button
+                                                    className="reject-booking-button"
+                                                    onClick={() =>
+                                                        handleBookingAction(
+                                                            booking._id,
+                                                            "reject"
+                                                        )
+                                                    }
+                                                >
+                                                    Reject
+                                                </button>
+
+                                            </>
+
+                                        ) : (
+
+                                            <span
+                                                className={`booking-status ${booking.status.toLowerCase()}`}
+                                            >
+                                                {
+                                                    booking.status
+                                                }
+                                            </span>
+
+                                        )}
+
+                                    </div>
+
+                                </div>
+
+                            )
+                        )}
 
                     </div>
 
                 )}
 
-            </div>
+            </section>
 
         </div>
 
     );
-
 }
-
 
 export default PhotographerDashboard;

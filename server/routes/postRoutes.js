@@ -7,8 +7,7 @@ const {
     getAllPosts
 } = require("../controllers/postController");
 
-const protect =
-    require("../middleware/authMiddleware");
+const protect = require("../middleware/authMiddleware");
 
 const {
     photographerOnly
@@ -17,7 +16,10 @@ const {
 const router = express.Router();
 
 
-// Feed
+// ======================================================
+// CLIENT / ALL USERS - EXPLORE
+// ======================================================
+
 router.get(
     "/",
     protect,
@@ -25,7 +27,10 @@ router.get(
 );
 
 
-// Create post
+// ======================================================
+// PHOTOGRAPHER - CREATE POST
+// ======================================================
+
 router.post(
     "/",
     protect,
@@ -34,7 +39,10 @@ router.post(
 );
 
 
-// Photographer posts
+// ======================================================
+// PHOTOGRAPHER POSTS
+// ======================================================
+
 router.get(
     "/photographer/:photographerId",
     protect,
@@ -42,7 +50,10 @@ router.get(
 );
 
 
-// Like / unlike
+// ======================================================
+// LIKE / UNLIKE
+// ======================================================
+
 router.post(
     "/:postId/like",
     protect,

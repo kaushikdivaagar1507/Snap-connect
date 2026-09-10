@@ -575,3 +575,29 @@ export const updatePhotographerProfile = async (
 
     return data;
 };
+export const createPost = async (
+    token,
+    postData
+) => {
+    const response = await fetch(
+        `${API_BASE_URL}/posts`,
+        {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(postData)
+        }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(
+            data.message || "Failed to create post"
+        );
+    }
+
+    return data;
+};
