@@ -17,6 +17,7 @@ const postSchema = new mongoose.Schema(
         caption: {
             type: String,
             trim: true,
+            maxlength: 500,
             default: ""
         },
 
@@ -29,7 +30,7 @@ const postSchema = new mongoose.Schema(
         category: {
             type: String,
             trim: true,
-            default: "OTHER"
+            default: "Photography"
         },
 
         likes: [

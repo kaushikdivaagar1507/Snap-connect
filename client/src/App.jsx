@@ -18,11 +18,14 @@ import PhotographerDashboard
 
 import EditPhotographerProfile
     from "./pages/EditPhotographerProfile";
-
+import PhotographerMyProfile
+    from "./pages/PhotographerMyProfile";
 import {
     getAllPosts,
     getPhotographers,
-    toggleLike
+    toggleLike,
+    getComments,
+    createComment
 } from "./api/api";
 
 import "./App.css";
@@ -60,7 +63,8 @@ function App() {
 
     const [showEditProfile, setShowEditProfile] =
         useState(false);
-
+    const [showMyProfile, setShowMyProfile] =
+    useState(false);
     const [
         selectedPhotographer,
         setSelectedPhotographer
@@ -88,8 +92,16 @@ function App() {
        EXPLORE POST
     ================================================= */
 
-    const [selectedPost, setSelectedPost] =
-        useState(null);
+        const [selectedPost, setSelectedPost] =
+            useState(null);
+        const [selectedPostComments, setSelectedPostComments] =
+            useState([]);
+
+        const [commentText, setCommentText] =
+            useState("");
+
+        const [commentsLoading, setCommentsLoading] =
+            useState(false);
 
 
     /* =================================================
@@ -144,7 +156,7 @@ function App() {
         setShowMyBookings(false);
         setShowDashboard(false);
         setShowEditProfile(false);
-
+        setShowMyProfile(false);
         setSelectedPhotographer(null);
         setSelectedPost(null);
 
@@ -155,11 +167,45 @@ function App() {
        OPEN EXPLORE POST
     ================================================= */
 
-    const handleOpenPost = (post) => {
+    const handleOpenPost = async (post) => {
 
-        setSelectedPost(post);
+    setSelectedPost(post);
 
-    };
+    setSelectedPostComments([]);
+
+    setCommentText("");
+
+    try {
+
+        setCommentsLoading(true);
+
+        const token =
+            localStorage.getItem("token");
+
+        const data =
+            await getComments(
+                token,
+                post._id
+            );
+
+        setSelectedPostComments(
+            data.comments || []
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Load Comments Error:",
+            error
+        );
+
+    } finally {
+
+        setCommentsLoading(false);
+
+    }
+
+};
 
 
     /* =================================================
@@ -168,10 +214,61 @@ function App() {
 
     const handleClosePost = () => {
 
-        setSelectedPost(null);
+    setSelectedPost(null);
+
+    setSelectedPostComments([]);
+
+    setCommentText("");
+
+};
+const handleAddExploreComment =
+    async () => {
+
+        if (
+            !selectedPost ||
+            !commentText.trim()
+        ) {
+
+            return;
+
+        }
+
+
+        try {
+
+            const token =
+                localStorage.getItem("token");
+
+
+            const data =
+                await createComment(
+                    token,
+                    selectedPost._id,
+                    commentText.trim()
+                );
+
+
+            setSelectedPostComments(
+                previous => [
+                    ...previous,
+                    data.comment
+                ]
+            );
+
+
+            setCommentText("");
+
+
+        } catch (error) {
+
+            console.error(
+                "Add Comment Error:",
+                error
+            );
+
+        }
 
     };
-
 
     /* =================================================
        HOME DATA
@@ -784,6 +881,28 @@ function App() {
     /* =================================================
        PHOTOGRAPHER DASHBOARD
     ================================================= */
+    /* =================================================
+   PHOTOGRAPHER MY PROFILE
+================================================= */
+
+    if (
+        role === "PHOTOGRAPHER" &&
+        showMyProfile
+    ) {
+
+        return (
+
+            <PhotographerMyProfile
+
+                onBack={() =>
+                    setShowMyProfile(false)
+                }
+
+            />
+
+        );
+
+    }
 
     if (
         role === "PHOTOGRAPHER" &&
@@ -888,56 +1007,50 @@ function App() {
                     )}
 
 
-                    {/* PHOTOGRAPHER NAVIGATION */}
+                   {role === "PHOTOGRAPHER" && (
 
-                    {role === "PHOTOGRAPHER" && (
+                            <>
 
-                        <>
+                                <button
+                                    className="nav-button"
 
-                            <button
-                                className="nav-button"
+                                    onClick={() => {
 
-                                onClick={() => {
+                                        setShowMyProfile(true);
 
-                                    setShowEditProfile(
-                                        false
-                                    );
+                                        setShowDashboard(false);
 
-                                    setShowDashboard(
-                                        true
-                                    );
+                                        setShowEditProfile(false);
 
-                                }}
-                            >
+                                    }}
+                                >
 
-                                📋 Dashboard
+                                    My Profile
 
-                            </button>
+                                </button>
 
 
-                            <button
-                                className="nav-button"
+                                <button
+                                    className="nav-button"
 
-                                onClick={() => {
+                                    onClick={() => {
 
-                                    setShowDashboard(
-                                        false
-                                    );
+                                        setShowDashboard(true);
 
-                                    setShowEditProfile(
-                                        true
-                                    );
+                                        setShowMyProfile(false);
 
-                                }}
-                            >
+                                        setShowEditProfile(false);
 
-                                ⚙ Edit Profile
+                                    }}
+                                >
 
-                            </button>
+                                    Dashboard
 
-                        </>
+                                </button>
 
-                    )}
+                            </>
+
+                        )}
 
 
                     {/* LOGOUT */}
@@ -1406,19 +1519,171 @@ function App() {
                                     LIKES
                                 --------------------------------- */}
 
-                                <div className="modal-likes">
+                               {/* ---------------------------------
+    LIKE BUTTON
+--------------------------------- */}
 
-                                    ♥{" "}
+                                <div className="modal-like-section">
 
-                                    {
-                                        selectedPost
-                                            .likes
-                                            ?.length ||
-                                        0
-                                    }
+                                    <button
+                                        type="button"
+                                        className={`modal-like-button ${
+                                            selectedPost.likedByMe
+                                                ? "liked"
+                                                : ""
+                                        }`}
+                                        onClick={() =>
+                                            handleLike(
+                                                selectedPost._id
+                                            )
+                                        }
+                                    >
 
-                                    {" "}
-                                    likes
+                                        <span className="modal-heart">
+
+                                            {selectedPost.likedByMe
+                                                ? "♥"
+                                                : "♡"}
+
+                                        </span>
+
+                                        <span>
+
+                                            {selectedPost.likes?.length || 0}
+
+                                        </span>
+
+                                    </button>
+
+
+                                    <span className="modal-like-text">
+
+                                        {selectedPost.likes?.length === 1
+                                            ? "like"
+                                            : "likes"}
+
+                                    </span>
+
+                                </div>
+
+                                {/* =================================
+                                    COMMENTS
+                                ================================= */}
+
+                                <div className="explore-comments-section">
+
+                                    <div className="explore-comments-title">
+
+                                        💬 Comments
+
+                                        <span>
+                                            {selectedPostComments.length}
+                                        </span>
+
+                                    </div>
+
+
+                                    <div className="explore-comments-list">
+
+                                        {commentsLoading ? (
+
+                                            <p className="comments-loading">
+                                                Loading comments...
+                                            </p>
+
+                                        ) : selectedPostComments.length === 0 ? (
+
+                                            <p className="no-comments">
+                                                No comments yet. Be the first to comment.
+                                            </p>
+
+                                        ) : (
+
+                                            selectedPostComments.map(
+                                                comment => (
+
+                                                    <div
+                                                        className="explore-comment-item"
+                                                        key={
+                                                            comment._id
+                                                        }
+                                                    >
+
+                                                        <strong>
+
+                                                            {
+                                                                comment
+                                                                    .user
+                                                                    ?.name ||
+                                                                "User"
+                                                            }
+
+                                                        </strong>
+
+
+                                                        <span>
+
+                                                            {
+                                                                comment.text
+                                                            }
+
+                                                        </span>
+
+                                                    </div>
+
+                                                )
+                                            )
+
+                                        )}
+
+                                    </div>
+
+
+                                    <div className="explore-comment-input">
+
+                                        <input
+                                            type="text"
+
+                                            placeholder="Add a comment..."
+
+                                            value={
+                                                commentText
+                                            }
+
+                                            onChange={(e) =>
+                                                setCommentText(
+                                                    e.target.value
+                                                )
+                                            }
+
+                                            onKeyDown={(e) => {
+
+                                                if (
+                                                    e.key ===
+                                                    "Enter"
+                                                ) {
+
+                                                    e.preventDefault();
+
+                                                    handleAddExploreComment();
+
+                                                }
+
+                                            }}
+                                        />
+
+
+                                        <button
+                                            onClick={
+                                                handleAddExploreComment
+                                            }
+                                        >
+
+                                            Post
+
+                                        </button>
+
+                                    </div>
 
                                 </div>
 

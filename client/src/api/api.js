@@ -112,24 +112,41 @@ export const getAllPosts = async (token) => {
 // LIKE POST
 // ======================================================
 
+
+
+/* =========================
+   COMMENTS
+========================= */
+
+// ======================================================
+// LIKE / UNLIKE POST
+// ======================================================
+
 export const toggleLike = async (
     token,
     postId
 ) => {
 
-    const response = await fetch(
-        `${API_BASE_URL}/posts/${postId}/like`,
-        {
-            method: "POST",
+    const response =
+        await fetch(
+            `${API_BASE_URL}/posts/${postId}/like`,
+            {
+                method: "POST",
 
-            headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json"
+                headers: {
+                    Authorization:
+                        `Bearer ${token}`,
+
+                    "Content-Type":
+                        "application/json"
+                }
             }
-        }
-    );
+        );
 
-    const data = await response.json();
+
+    const data =
+        await response.json();
+
 
     if (!response.ok) {
 
@@ -140,85 +157,16 @@ export const toggleLike = async (
 
     }
 
-    return data;
-};
-
-
-/* =========================
-   COMMENTS
-========================= */
-
-export const getComments = async (
-    token,
-    postId
-) => {
-
-    const response = await fetch(
-        `${API_BASE_URL}/posts/${postId}/comments`,
-        {
-            method: "GET",
-
-            headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json"
-            }
-        }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-
-        throw new Error(
-            data.message ||
-            "Failed to fetch comments"
-        );
-
-    }
 
     return data;
-};
 
+};
 
 // ======================================================
 // CREATE COMMENT
 // ======================================================
 
-export const createComment = async (
-    token,
-    postId,
-    text
-) => {
 
-    const response = await fetch(
-        `${API_BASE_URL}/posts/${postId}/comments`,
-        {
-            method: "POST",
-
-            headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-                text
-            })
-        }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-
-        throw new Error(
-            data.message ||
-            "Failed to create comment"
-        );
-
-    }
-
-    return data;
-};
 
 
 /* =========================
@@ -296,36 +244,7 @@ export const getPhotographerById = async (
 // GET PHOTOGRAPHER POSTS
 // ======================================================
 
-export const getPhotographerPosts = async (
-    token,
-    photographerId
-) => {
 
-    const response = await fetch(
-        `${API_BASE_URL}/posts/photographer/${photographerId}`,
-        {
-            method: "GET",
-
-            headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json"
-            }
-        }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-
-        throw new Error(
-            data.message ||
-            "Failed to fetch photographer posts"
-        );
-
-    }
-
-    return data;
-};
 
 
 /* =========================
@@ -575,29 +494,309 @@ export const updatePhotographerProfile = async (
 
     return data;
 };
+
+//----------------------------------------------------------------------------------------
+/* =====================================================
+   CREATE PHOTOGRAPHER POST
+===================================================== */
+
 export const createPost = async (
     token,
     postData
 ) => {
-    const response = await fetch(
-        `${API_BASE_URL}/posts`,
-        {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(postData)
-        }
-    );
 
-    const data = await response.json();
+    const response =
+        await fetch(
+            `${API_BASE_URL}/posts`,
+            {
+                method: "POST",
+
+                headers: {
+                    Authorization:
+                        `Bearer ${token}`,
+
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body:
+                    JSON.stringify(
+                        postData
+                    )
+            }
+        );
+
+
+    const data =
+        await response.json();
+
 
     if (!response.ok) {
+
         throw new Error(
-            data.message || "Failed to create post"
+            data.message ||
+            "Failed to create post"
         );
+
     }
 
+
     return data;
+
+};
+
+
+/* =====================================================
+   GET PHOTOGRAPHER POSTS
+===================================================== */
+
+export const getPhotographerPosts =
+    async (
+        token,
+        photographerId
+    ) => {
+
+        const response =
+            await fetch(
+                `${API_BASE_URL}/posts/photographer/${photographerId}`,
+                {
+                    method: "GET",
+
+                    headers: {
+                        Authorization:
+                            `Bearer ${token}`,
+
+                        "Content-Type":
+                            "application/json"
+                    }
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.message ||
+                "Failed to fetch photographer posts"
+            );
+
+        }
+
+
+        return data;
+
+    };
+
+
+/* =====================================================
+   GET COMMENTS
+===================================================== */
+
+export const getComments =
+    async (
+        token,
+        postId
+    ) => {
+
+        const response =
+            await fetch(
+                `${API_BASE_URL}/posts/${postId}/comments`,
+                {
+                    method: "GET",
+
+                    headers: {
+                        Authorization:
+                            `Bearer ${token}`,
+
+                        "Content-Type":
+                            "application/json"
+                    }
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.message ||
+                "Failed to fetch comments"
+            );
+
+        }
+
+
+        return data;
+
+    };
+
+
+/* =====================================================
+   CREATE COMMENT
+===================================================== */
+
+export const createComment =
+    async (
+        token,
+        postId,
+        text
+    ) => {
+
+        const response =
+            await fetch(
+                `${API_BASE_URL}/posts/${postId}/comments`,
+                {
+                    method: "POST",
+
+                    headers: {
+                        Authorization:
+                            `Bearer ${token}`,
+
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+                            text
+                        })
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.message ||
+                "Failed to add comment"
+            );
+
+        }
+
+
+        return data;
+
+    };
+    /* =================================================
+   LIKE / UNLIKE POST
+================================================= */
+
+const handleLike = async (
+    postId
+) => {
+
+    try {
+
+        const token =
+            localStorage.getItem(
+                "token"
+            );
+
+
+        if (!token) {
+
+            return;
+
+        }
+
+
+        const data =
+            await toggleLike(
+                token,
+                postId
+            );
+
+
+        /*
+           Update main posts
+        */
+
+        setPosts(
+            previousPosts =>
+                previousPosts.map(
+                    post => {
+
+                        if (
+                            post._id ===
+                            postId
+                        ) {
+
+                            return {
+
+                                ...post,
+
+                                likes:
+                                    data.likes ||
+                                    post.likes,
+
+                                likedByMe:
+                                    data.likedByMe
+
+                            };
+
+                        }
+
+
+                        return post;
+
+                    }
+                )
+        );
+
+
+        /*
+           Update selected modal post
+        */
+
+        setSelectedPost(
+            previousPost => {
+
+                if (
+                    !previousPost ||
+                    previousPost._id !==
+                    postId
+                ) {
+
+                    return previousPost;
+
+                }
+
+
+                return {
+
+                    ...previousPost,
+
+                    likes:
+                        data.likes ||
+                        previousPost.likes,
+
+                    likedByMe:
+                        data.likedByMe
+
+                };
+
+            }
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Like Error:",
+            error
+        );
+
+    }
+
 };

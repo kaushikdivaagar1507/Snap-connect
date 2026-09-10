@@ -5,14 +5,17 @@ const {
     getComments
 } = require("../controllers/commentController");
 
-const protect = require("../middleware/authMiddleware");
+const protect =
+    require("../middleware/authMiddleware");
 
-const router = express.Router();
+
+const router =
+    express.Router();
 
 
-// ==========================================
-// CREATE COMMENT
-// ==========================================
+/* =====================================================
+   CREATE COMMENT
+===================================================== */
 
 router.post(
     "/:postId/comments",
@@ -21,9 +24,9 @@ router.post(
 );
 
 
-// ==========================================
-// GET COMMENTS
-// ==========================================
+/* =====================================================
+   GET COMMENTS
+===================================================== */
 
 router.get(
     "/:postId/comments",

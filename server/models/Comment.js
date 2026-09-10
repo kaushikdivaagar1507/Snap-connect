@@ -18,7 +18,7 @@ const commentSchema = new mongoose.Schema(
             type: String,
             required: true,
             trim: true,
-            maxlength: 500
+            maxlength: 300
         }
     },
     {
@@ -26,6 +26,7 @@ const commentSchema = new mongoose.Schema(
     }
 );
 
-const Comment = mongoose.model("Comment", commentSchema);
-
-module.exports = Comment;
+module.exports = mongoose.model(
+    "Comment",
+    commentSchema
+);
