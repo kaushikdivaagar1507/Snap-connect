@@ -6917,14 +6917,22 @@ button {
 /* =====================================================
    PHOTOGRAPHER MY PROFILE
 ===================================================== */
+/* =====================================================
+   PHOTOGRAPHER MY PROFILE
+   SNAPBOOK DARK LUXURY THEME
+===================================================== */
 
 .my-profile-page {
     min-height: 100vh;
-    background: #fafafa;
-    color: #171717;
+    background: var(--bg);
+    color: var(--cream);
     padding-bottom: 80px;
 }
 
+
+/* =====================================================
+   TOP BAR
+===================================================== */
 
 .my-profile-topbar {
     width: min(1180px, 92%);
@@ -6936,40 +6944,54 @@ button {
     justify-content: space-between;
 
     gap: 20px;
-}
 
+    border-bottom: 1px solid var(--border);
+}
 
 .my-profile-topbar h1 {
-    font-size: 26px;
     margin: 0;
+    font-size: 26px;
+    color: var(--cream);
 }
 
 
-.back-button {
-    border: 1px solid #ddd;
-    background: white;
-    border-radius: 10px;
+/* =====================================================
+   BACK BUTTON
+===================================================== */
 
+.back-button {
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+
+    color: var(--cream);
+
+    border-radius: 10px;
     padding: 10px 16px;
 
     cursor: pointer;
-
     font-weight: 600;
 
-    transition: 0.2s ease;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease;
 }
-
 
 .back-button:hover {
-    background: #f3f3f3;
+    background: var(--bg-card-light);
+    border-color: var(--gold);
+    transform: translateY(-1px);
 }
 
+
+/* =====================================================
+   TOP ACTIONS
+===================================================== */
 
 .profile-top-actions {
     display: flex;
     gap: 10px;
 }
-
 
 .profile-edit-button,
 .create-post-button {
@@ -6979,28 +7001,40 @@ button {
     padding: 11px 17px;
 
     cursor: pointer;
-
     font-weight: 700;
 
-    transition: 0.2s ease;
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
 }
-
 
 .profile-edit-button {
-    background: #171717;
-    color: white;
+    background: var(--gold);
+    color: var(--bg);
 }
-
 
 .create-post-button {
-    background: #f1e7dc;
-    color: #171717;
-}
+    background: var(--bg-card-light);
+    color: var(--cream);
 
+    border: 1px solid var(--border);
+}
 
 .profile-edit-button:hover,
 .create-post-button:hover {
     transform: translateY(-1px);
+}
+
+.profile-edit-button:hover {
+    background: var(--gold-light);
+    box-shadow: 0 8px 25px rgba(199, 165, 106, 0.15);
+}
+
+.create-post-button:hover {
+    border-color: var(--gold);
+    color: var(--gold-light);
 }
 
 
@@ -7013,109 +7047,145 @@ button {
     margin: 10px auto 45px;
 
     display: flex;
-
     gap: 70px;
 
     align-items: center;
 
     padding: 35px 0;
 
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid var(--border);
 }
 
+
+/* =====================================================
+   PROFILE AVATAR
+===================================================== */
 
 .my-profile-avatar {
     width: 170px;
     height: 170px;
 
     border-radius: 50%;
-
     overflow: hidden;
 
     flex-shrink: 0;
 
-    background: #e9e9e9;
+    background:
+        radial-gradient(
+            circle at center,
+            var(--bg-card-light),
+            var(--bg-card)
+        );
+
+    border: 2px solid var(--gold-dark);
 
     display: flex;
     align-items: center;
     justify-content: center;
 
+    color: var(--gold);
+
     font-size: 60px;
     font-weight: 800;
-}
 
+    box-shadow:
+        0 0 0 6px rgba(199, 165, 106, 0.05);
+}
 
 .my-profile-avatar img {
     width: 100%;
     height: 100%;
-
     object-fit: cover;
 }
 
 
+/* =====================================================
+   PROFILE NAME
+===================================================== */
+
 .my-profile-name-row {
     display: flex;
     align-items: center;
+
     gap: 12px;
 
     margin-bottom: 20px;
 }
 
-
 .my-profile-name-row h2 {
     margin: 0;
-    font-size: 30px;
-}
 
+    font-size: 30px;
+
+    color: var(--cream);
+}
 
 .my-profile-role {
     font-size: 11px;
+
     letter-spacing: 1px;
 
     padding: 6px 9px;
 
-    background: #171717;
-    color: white;
+    background: rgba(199, 165, 106, 0.12);
+
+    color: var(--gold-light);
+
+    border: 1px solid rgba(199, 165, 106, 0.25);
 
     border-radius: 20px;
 }
 
 
+/* =====================================================
+   PROFILE STATS
+===================================================== */
+
 .my-profile-stats {
     display: flex;
+
     gap: 40px;
 
     margin-bottom: 18px;
 }
-
 
 .my-profile-stats div {
     display: flex;
     gap: 6px;
 }
 
-
 .my-profile-stats strong {
     font-size: 17px;
+    color: var(--cream);
 }
-
 
 .my-profile-stats span {
-    color: #666;
+    color: var(--cream-soft);
 }
 
+
+/* =====================================================
+   PROFILE INFORMATION
+===================================================== */
 
 .my-profile-main-info p {
     margin: 8px 0;
 
-    color: #444;
-}
+    color: var(--cream-soft);
 
+    line-height: 1.5;
+}
 
 .my-profile-specialization {
     font-weight: 700;
+
+    color: var(--gold-light) !important;
 }
 
+
+/* =====================================================
+   AVAILABILITY
+===================================================== */
 
 .profile-available,
 .profile-unavailable {
@@ -7131,21 +7201,23 @@ button {
     font-weight: 700;
 }
 
-
 .profile-available {
-    background: #e7f7ed;
-    color: #168344;
+    background: rgba(143, 184, 141, 0.12);
+    color: var(--success);
+
+    border: 1px solid rgba(143, 184, 141, 0.22);
 }
 
-
 .profile-unavailable {
-    background: #fce8e8;
-    color: #b42318;
+    background: rgba(200, 80, 80, 0.10);
+    color: #e58b8b;
+
+    border: 1px solid rgba(200, 80, 80, 0.20);
 }
 
 
 /* =====================================================
-   EDIT PROFILE SECTION
+   EDIT PROFILE / CREATE POST SECTIONS
 ===================================================== */
 
 .profile-edit-section,
@@ -7154,18 +7226,22 @@ button {
 
     margin: 0 auto 50px;
 
-    background: white;
+    background: var(--bg-card);
 
-    border: 1px solid #e4e4e4;
+    border: 1px solid var(--border);
 
     border-radius: 18px;
 
     padding: 30px;
 
     box-shadow:
-        0 10px 30px rgba(0, 0, 0, 0.04);
+        0 10px 35px rgba(0, 0, 0, 0.18);
 }
 
+
+/* =====================================================
+   SECTION HEADERS
+===================================================== */
 
 .profile-form-header span,
 .create-post-heading span,
@@ -7174,11 +7250,10 @@ button {
 
     letter-spacing: 2px;
 
-    color: #888;
+    color: var(--gold);
 
     font-weight: 800;
 }
-
 
 .profile-form-header h2,
 .create-post-heading h2,
@@ -7186,29 +7261,39 @@ button {
     margin: 8px 0;
 
     font-size: 28px;
-}
 
+    color: var(--cream);
+}
 
 .profile-form-header p,
 .create-post-heading p {
     margin-top: 0;
 
-    color: #777;
+    color: var(--cream-soft);
+
+    line-height: 1.5;
 }
 
+
+/* =====================================================
+   FORMS
+===================================================== */
 
 .profile-form-grid,
 .create-post-grid {
     display: grid;
 
-    grid-template-columns:
-        repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr);
 
     gap: 20px;
 
     margin-top: 25px;
 }
 
+
+/* =====================================================
+   FORM INPUTS
+===================================================== */
 
 .profile-edit-form input,
 .profile-edit-form select,
@@ -7221,7 +7306,7 @@ button {
 
     padding: 13px 14px;
 
-    border: 1px solid #d8d8d8;
+    border: 1px solid var(--border);
 
     border-radius: 10px;
 
@@ -7229,18 +7314,55 @@ button {
 
     outline: none;
 
-    background: white;
+    background: var(--bg-card-light);
+
+    color: var(--cream);
+
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease;
 }
 
+.profile-edit-form input::placeholder,
+.create-post-form input::placeholder,
+.create-post-form textarea::placeholder {
+    color: var(--cream-soft);
+    opacity: 0.65;
+}
 
 .profile-edit-form input:focus,
 .profile-edit-form select:focus,
 .create-post-form input:focus,
 .create-post-form textarea:focus,
 .create-post-form select:focus {
-    border-color: #777;
+    border-color: var(--gold);
+
+    background: var(--bg-card);
+
+    box-shadow:
+        0 0 0 3px rgba(199, 165, 106, 0.08);
 }
 
+
+/* =====================================================
+   SELECT OPTIONS
+===================================================== */
+
+.profile-edit-form select,
+.create-post-form select {
+    color: var(--cream);
+}
+
+.profile-edit-form select option,
+.create-post-form select option {
+    background: var(--bg-card);
+    color: var(--cream);
+}
+
+
+/* =====================================================
+   AVAILABILITY CHECKBOX
+===================================================== */
 
 .availability-checkbox {
     display: flex;
@@ -7252,13 +7374,20 @@ button {
     margin-top: 20px;
 
     font-weight: 600;
-}
 
+    color: var(--cream);
+}
 
 .availability-checkbox input {
     width: auto;
+
+    accent-color: var(--gold);
 }
 
+
+/* =====================================================
+   FORM ACTIONS
+===================================================== */
 
 .profile-form-actions,
 .create-post-actions {
@@ -7271,7 +7400,6 @@ button {
     margin-top: 25px;
 }
 
-
 .secondary-profile-button,
 .save-profile-button {
     border: none;
@@ -7283,18 +7411,39 @@ button {
     cursor: pointer;
 
     font-weight: 700;
-}
 
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
 
 .secondary-profile-button {
-    background: #eee;
+    background: var(--bg-card-light);
+
+    color: var(--cream);
+
+    border: 1px solid var(--border);
 }
 
+.secondary-profile-button:hover {
+    border-color: var(--gold);
+
+    color: var(--gold-light);
+
+    transform: translateY(-1px);
+}
 
 .save-profile-button {
-    background: #171717;
+    background: var(--gold);
 
-    color: white;
+    color: var(--bg);
+}
+
+.save-profile-button:hover {
+    background: var(--gold-light);
+
+    transform: translateY(-1px);
 }
 
 
@@ -7306,15 +7455,20 @@ button {
     margin-top: 25px;
 }
 
-
 .create-post-form small {
     display: block;
 
     margin-top: 7px;
 
-    color: #888;
+    color: var(--cream-soft);
+
+    opacity: 0.75;
 }
 
+
+/* =====================================================
+   POST PREVIEW
+===================================================== */
 
 .post-preview {
     width: 260px;
@@ -7326,9 +7480,10 @@ button {
 
     border-radius: 14px;
 
-    background: #eee;
-}
+    background: var(--bg-card-light);
 
+    border: 1px solid var(--border);
+}
 
 .post-preview img {
     width: 100%;
@@ -7348,59 +7503,96 @@ button {
     margin: 0 auto;
 }
 
-
 .my-posts-heading {
     margin-bottom: 25px;
 }
 
-
 .my-posts-grid {
     display: grid;
 
-    grid-template-columns:
-        repeat(3, 1fr);
+    grid-template-columns: repeat(3, 1fr);
 
     gap: 18px;
 }
 
 
+/* =====================================================
+   POST CARD
+===================================================== */
+
 .my-post-card {
-    background: white;
+    background: var(--bg-card);
 
     border-radius: 14px;
 
     overflow: hidden;
 
-    border: 1px solid #e5e5e5;
+    border: 1px solid var(--border);
+
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
+.my-post-card:hover {
+    transform: translateY(-2px);
+
+    border-color: rgba(199, 165, 106, 0.35);
+
+    box-shadow:
+        0 12px 30px rgba(0, 0, 0, 0.18);
+}
+
+
+/* =====================================================
+   POST IMAGE
+===================================================== */
 
 .my-post-image {
     aspect-ratio: 1 / 1;
 
-    background: #eee;
-}
+    background: var(--bg-card-light);
 
+    overflow: hidden;
+}
 
 .my-post-image img {
     width: 100%;
     height: 100%;
 
     object-fit: cover;
+
+    display: block;
+
+    transition: transform 0.3s ease;
 }
 
+.my-post-card:hover .my-post-image img {
+    transform: scale(1.02);
+}
+
+
+/* =====================================================
+   POST CONTENT
+===================================================== */
 
 .my-post-content {
     padding: 15px;
 }
 
-
 .my-post-content p {
     margin-top: 0;
 
     line-height: 1.5;
+
+    color: var(--cream);
 }
 
+
+/* =====================================================
+   POST META
+===================================================== */
 
 .my-post-meta {
     display: flex;
@@ -7409,11 +7601,15 @@ button {
 
     gap: 10px;
 
-    color: #777;
+    color: var(--cream-soft);
 
     font-size: 12px;
 }
 
+
+/* =====================================================
+   POST ACTIONS
+===================================================== */
 
 .my-post-actions {
     display: flex;
@@ -7424,30 +7620,40 @@ button {
 
     padding-top: 12px;
 
-    border-top: 1px solid #eee;
+    border-top: 1px solid var(--border);
 }
-
 
 .my-post-actions button {
     border: none;
 
     background: transparent;
 
+    color: var(--cream-soft);
+
     cursor: pointer;
 
     font-weight: 600;
-}
 
+    transition:
+        color 0.2s ease,
+        opacity 0.2s ease;
+}
 
 .my-post-actions button:hover {
-    opacity: 0.7;
+    color: var(--gold-light);
+
+    opacity: 1;
 }
 
 
-.my-posts-empty {
-    background: white;
+/* =====================================================
+   EMPTY POSTS
+===================================================== */
 
-    border: 1px dashed #ccc;
+.my-posts-empty {
+    background: var(--bg-card);
+
+    border: 1px dashed var(--border);
 
     border-radius: 18px;
 
@@ -7456,21 +7662,22 @@ button {
     text-align: center;
 }
 
-
 .my-posts-empty > div {
     font-size: 45px;
 
     margin-bottom: 10px;
-}
 
+    color: var(--gold);
+}
 
 .my-posts-empty h3 {
     margin-bottom: 8px;
+
+    color: var(--cream);
 }
 
-
 .my-posts-empty p {
-    color: #777;
+    color: var(--cream-soft);
 
     margin-bottom: 20px;
 }
@@ -7483,11 +7690,10 @@ button {
 .post-comments {
     margin-top: 15px;
 
-    border-top: 1px solid #eee;
+    border-top: 1px solid var(--border);
 
     padding-top: 12px;
 }
-
 
 .comments-list {
     max-height: 220px;
@@ -7495,6 +7701,10 @@ button {
     overflow-y: auto;
 }
 
+
+/* =====================================================
+   COMMENT ITEM
+===================================================== */
 
 .comment-item {
     display: flex;
@@ -7504,25 +7714,32 @@ button {
     padding: 7px 0;
 
     font-size: 13px;
-}
 
+    color: var(--cream);
+}
 
 .comment-item strong {
     white-space: nowrap;
-}
 
+    color: var(--gold-light);
+}
 
 .comment-item span {
-    color: #444;
+    color: var(--cream-soft);
 }
-
 
 .no-comments {
-    color: #888;
+    color: var(--cream-soft);
 
     font-size: 13px;
+
+    opacity: 0.7;
 }
 
+
+/* =====================================================
+   COMMENT INPUT
+===================================================== */
 
 .comment-input-row {
     display: flex;
@@ -7532,21 +7749,33 @@ button {
     margin-top: 10px;
 }
 
-
 .comment-input-row input {
     flex: 1;
 
     min-width: 0;
 
-    border: 1px solid #ddd;
+    border: 1px solid var(--border);
 
     border-radius: 8px;
 
     padding: 9px 10px;
 
     outline: none;
+
+    background: var(--bg-card-light);
+
+    color: var(--cream);
 }
 
+.comment-input-row input::placeholder {
+    color: var(--cream-soft);
+
+    opacity: 0.65;
+}
+
+.comment-input-row input:focus {
+    border-color: var(--gold);
+}
 
 .comment-input-row button {
     border: none;
@@ -7555,13 +7784,23 @@ button {
 
     padding: 0 13px;
 
-    background: #171717;
+    background: var(--gold);
 
-    color: white;
+    color: var(--bg);
 
     cursor: pointer;
 
     font-weight: 700;
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+.comment-input-row button:hover {
+    background: var(--gold-light);
+
+    transform: translateY(-1px);
 }
 
 
@@ -7570,13 +7809,12 @@ button {
 ===================================================== */
 
 .explore-comments-section {
-    border-top: 1px solid #eee;
+    border-top: 1px solid var(--border);
 
     margin-top: 20px;
 
     padding-top: 15px;
 }
-
 
 .explore-comments-title {
     display: flex;
@@ -7586,15 +7824,15 @@ button {
     font-weight: 800;
 
     margin-bottom: 12px;
+
+    color: var(--cream);
 }
 
-
 .explore-comments-title span {
-    color: #888;
+    color: var(--cream-soft);
 
     font-size: 13px;
 }
-
 
 .explore-comments-list {
     max-height: 190px;
@@ -7603,7 +7841,6 @@ button {
 
     padding-right: 5px;
 }
-
 
 .explore-comment-item {
     padding: 8px 0;
@@ -7615,25 +7852,28 @@ button {
     font-size: 13px;
 }
 
-
 .explore-comment-item strong {
     white-space: nowrap;
+
+    color: var(--gold-light);
 }
 
-
 .explore-comment-item span {
-    color: #444;
+    color: var(--cream-soft);
 
     line-height: 1.4;
 }
 
-
 .comments-loading {
-    color: #888;
+    color: var(--cream-soft);
 
     font-size: 13px;
 }
 
+
+/* =====================================================
+   EXPLORE COMMENT INPUT
+===================================================== */
 
 .explore-comment-input {
     display: flex;
@@ -7643,28 +7883,40 @@ button {
     margin-top: 12px;
 }
 
-
 .explore-comment-input input {
     flex: 1;
 
     min-width: 0;
 
-    border: 1px solid #ddd;
+    border: 1px solid var(--border);
 
     border-radius: 9px;
 
     padding: 11px 12px;
 
     outline: none;
+
+    background: var(--bg-card-light);
+
+    color: var(--cream);
 }
 
+.explore-comment-input input::placeholder {
+    color: var(--cream-soft);
+
+    opacity: 0.65;
+}
+
+.explore-comment-input input:focus {
+    border-color: var(--gold);
+}
 
 .explore-comment-input button {
     border: none;
 
-    background: #171717;
+    background: var(--gold);
 
-    color: white;
+    color: var(--bg);
 
     border-radius: 9px;
 
@@ -7673,6 +7925,16 @@ button {
     cursor: pointer;
 
     font-weight: 700;
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+.explore-comment-input button:hover {
+    background: var(--gold-light);
+
+    transform: translateY(-1px);
 }
 
 
@@ -7693,7 +7955,7 @@ button {
 
     gap: 15px;
 
-    color: #777;
+    color: var(--cream-soft);
 }
 
 
@@ -7707,13 +7969,11 @@ button {
         flex-wrap: wrap;
     }
 
-
     .my-profile-topbar h1 {
         order: -1;
 
         width: 100%;
     }
-
 
     .my-profile-header {
         flex-direction: column;
@@ -7723,26 +7983,25 @@ button {
         gap: 30px;
     }
 
-
     .my-profile-avatar {
         width: 130px;
         height: 130px;
     }
-
 
     .profile-form-grid,
     .create-post-grid {
         grid-template-columns: 1fr;
     }
 
-
     .my-posts-grid {
-        grid-template-columns:
-            repeat(2, 1fr);
+        grid-template-columns: repeat(2, 1fr);
     }
-
 }
 
+
+/* =====================================================
+   MOBILE
+===================================================== */
 
 @media (max-width: 520px) {
 
@@ -7750,23 +8009,39 @@ button {
         width: 100%;
     }
 
-
     .profile-edit-button,
     .create-post-button {
         flex: 1;
     }
 
+    .my-profile-stats {
+        gap: 20px;
+
+        flex-wrap: wrap;
+    }
+
+    .my-profile-name-row {
+        flex-wrap: wrap;
+    }
 
     .my-posts-grid {
         grid-template-columns: 1fr;
     }
-
 
     .profile-edit-section,
     .create-post-section {
         padding: 20px;
     }
 
+    .profile-form-actions,
+    .create-post-actions {
+        flex-direction: column;
+    }
+
+    .secondary-profile-button,
+    .save-profile-button {
+        width: 100%;
+    }
 }
 /* =====================================================
    SNAPBOOK LIKE SYSTEM

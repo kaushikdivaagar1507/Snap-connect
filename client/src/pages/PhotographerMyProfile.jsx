@@ -406,69 +406,29 @@ function PhotographerMyProfile({
    LIKE / UNLIKE
 ================================================= */
 
-const handleLike =
-    async (postId) => {
+const handleLike = async (postId) => {
+    try {
+        const token = localStorage.getItem("token");
 
-        try {
+        const data = await toggleLike(token, postId);
 
-            const token =
-                localStorage.getItem(
-                    "token"
-                );
+        setPosts(previous =>
+            previous.map(post => {
+                if (post._id === postId) {
+                    return {
+                        ...post,
+                        likes: data.likes || post.likes,
+                        likedByMe: data.likedByMe
+                    };
+                }
 
-
-            const data =
-                await toggleLike(
-                    token,
-                    postId
-                );
-
-
-            setPosts(
-                previous =>
-                    previous.map(
-                        post => {
-
-                            if (
-                                post._id ===
-                                postId
-                            ) {
-
-                                return {
-
-                                    ...post,
-
-                                    likes:
-                                        data.likes ||
-                                        post.likes,
-
-                                    likedByMe:
-                                        data.likedByMe
-
-                                };
-
-                            }
-
-
-                            return post;
-
-                        }
-                    )
-            );
-
-
-        } catch (err) {
-
-            console.error(
-                "Like Error:",
-                err
-            );
-
-        }
-
-    };
-
-
+                return post;
+            })
+        );
+    } catch (err) {
+        console.error("Like Error:", err);
+    }
+};
     /* =================================================
        LOAD COMMENTS
     ================================================= */
