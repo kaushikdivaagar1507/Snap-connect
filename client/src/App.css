@@ -5729,3 +5729,421 @@ button {
     }
 
 }
+
+/* =====================================================
+   PHOTOGRAPHER SEARCH + FILTER
+   ADD-ON FOR EXISTING SNAPBOOK UI
+===================================================== */
+
+
+/* =====================================================
+   SEARCH AREA
+===================================================== */
+
+.photographer-search-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+
+/* =====================================================
+   SEARCH BAR
+===================================================== */
+
+.search-bar-wrapper {
+    flex: 1;
+
+    height: 48px;
+
+    display: flex;
+    align-items: center;
+
+    background: #121212;
+
+    border: 1px solid #2a2a2a;
+
+    border-radius: 12px;
+
+    padding: 0 14px;
+
+    transition: 0.2s ease;
+}
+
+
+.search-bar-wrapper:focus-within {
+    border-color: #555;
+
+    box-shadow:
+        0 0 0 3px rgba(
+            225,
+            48,
+            108,
+            0.08
+        );
+}
+
+
+.search-icon {
+    font-size: 17px;
+
+    margin-right: 10px;
+
+    opacity: 0.7;
+}
+
+
+.search-bar-wrapper input {
+    flex: 1;
+
+    width: 100%;
+
+    height: 100%;
+
+    border: none;
+
+    outline: none;
+
+    background: transparent;
+
+    color: white;
+
+    font-size: 14px;
+}
+
+
+.search-bar-wrapper input::placeholder {
+    color: #666;
+}
+
+
+.search-clear-button {
+    width: 28px;
+    height: 28px;
+
+    border: none;
+
+    border-radius: 50%;
+
+    background: #292929;
+
+    color: #aaa;
+
+    font-size: 18px;
+
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.search-clear-button:hover {
+    background: #3a3a3a;
+
+    color: white;
+}
+
+
+/* =====================================================
+   FILTER TOGGLE
+===================================================== */
+
+.filter-toggle-button {
+    height: 48px;
+
+    padding: 0 18px;
+
+    border-radius: 12px;
+
+    border: 1px solid #2a2a2a;
+
+    background: #121212;
+
+    color: #ddd;
+
+    cursor: pointer;
+
+    font-size: 14px;
+
+    position: relative;
+
+    transition: 0.2s ease;
+}
+
+
+.filter-toggle-button:hover {
+    background: #1b1b1b;
+
+    border-color: #444;
+}
+
+
+.filter-toggle-button.active {
+    background: #1d1118;
+
+    border-color: #7a284b;
+
+    color: #f06a96;
+}
+
+
+.filter-count {
+    position: absolute;
+
+    top: -6px;
+    right: -6px;
+
+    width: 17px;
+    height: 17px;
+
+    border-radius: 50%;
+
+    background: #e1306c;
+
+    color: white;
+
+    font-size: 10px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-weight: 700;
+}
+
+
+/* =====================================================
+   FILTER PANEL
+===================================================== */
+
+.photographer-filter-panel {
+    background: #101010;
+
+    border: 1px solid #282828;
+
+    border-radius: 14px;
+
+    padding: 20px;
+
+    margin-bottom: 18px;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 15px;
+
+    align-items: end;
+}
+
+
+.filter-group {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 7px;
+}
+
+
+.filter-group label {
+    color: #aaa;
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+
+.filter-group input,
+.filter-group select {
+    width: 100%;
+
+    height: 44px;
+
+    box-sizing: border-box;
+
+    background: #181818;
+
+    border: 1px solid #303030;
+
+    color: white;
+
+    border-radius: 9px;
+
+    padding: 0 12px;
+
+    outline: none;
+
+    font-family: inherit;
+
+    font-size: 13px;
+}
+
+
+.filter-group input:focus,
+.filter-group select:focus {
+    border-color: #e1306c;
+}
+
+
+.filter-group input::placeholder {
+    color: #666;
+}
+
+
+.filter-group select option {
+    background: #181818;
+
+    color: white;
+}
+
+
+/* =====================================================
+   CLEAR FILTERS
+===================================================== */
+
+.clear-filters-button {
+    height: 44px;
+
+    padding: 0 15px;
+
+    border-radius: 9px;
+
+    border: 1px solid #333;
+
+    background: #222;
+
+    color: #ddd;
+
+    cursor: pointer;
+
+    font-size: 13px;
+
+    transition: 0.2s ease;
+}
+
+
+.clear-filters-button:hover {
+    background: #2c2c2c;
+
+    color: white;
+}
+
+
+/* =====================================================
+   RESULT INFORMATION
+===================================================== */
+
+.photographer-result-info {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    margin: 12px 0 18px;
+
+    color: #777;
+
+    font-size: 12px;
+}
+
+
+.filtered-label {
+    color: #e1306c;
+
+    background: #241018;
+
+    border: 1px solid #42202d;
+
+    padding: 5px 9px;
+
+    border-radius: 20px;
+
+    font-size: 10px;
+
+    font-weight: 600;
+}
+
+
+/* =====================================================
+   EMPTY SEARCH BUTTON
+===================================================== */
+
+.empty-clear-button {
+    margin-top: 18px;
+
+    padding: 10px 16px;
+
+    border: 1px solid #333;
+
+    border-radius: 9px;
+
+    background: #1b1b1b;
+
+    color: white;
+
+    cursor: pointer;
+
+    font-size: 13px;
+}
+
+
+.empty-clear-button:hover {
+    background: #292929;
+
+    border-color: #555;
+}
+
+
+/* =====================================================
+   MOBILE SEARCH
+===================================================== */
+
+@media (max-width: 700px) {
+
+    .photographer-search-area {
+        flex-direction: column;
+
+        align-items: stretch;
+    }
+
+
+    .filter-toggle-button {
+        width: 100%;
+    }
+
+
+    .photographer-filter-panel {
+        grid-template-columns: 1fr;
+
+        padding: 15px;
+    }
+
+
+    .photographer-result-info {
+        margin-top: 15px;
+    }
+
+}
+
+
+@media (max-width: 500px) {
+
+    .search-bar-wrapper {
+        height: 45px;
+    }
+
+
+    .filter-toggle-button {
+        height: 45px;
+    }
+
+}

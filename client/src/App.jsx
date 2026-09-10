@@ -1,5 +1,6 @@
 import {
     useEffect,
+    useMemo,
     useState
 } from "react";
 
@@ -22,9 +23,7 @@ import EditPhotographerProfile
 import {
     getAllPosts,
     getPhotographers,
-    toggleLike,
-    getComments,
-    createComment
+    toggleLike
 } from "./api/api";
 
 
@@ -32,6 +31,10 @@ import "./App.css";
 
 
 function App() {
+
+    /* =================================================
+       AUTH
+    ================================================= */
 
     const [isLoggedIn, setIsLoggedIn] =
         useState(
@@ -48,6 +51,10 @@ function App() {
     const [showSignup, setShowSignup] =
         useState(false);
 
+
+    /* =================================================
+       PAGE STATES
+    ================================================= */
 
     const [showMyBookings, setShowMyBookings] =
         useState(false);
@@ -67,6 +74,10 @@ function App() {
     ] = useState(null);
 
 
+    /* =================================================
+       DATA
+    ================================================= */
+
     const [posts, setPosts] =
         useState([]);
 
@@ -81,6 +92,30 @@ function App() {
 
     const [error, setError] =
         useState("");
+
+
+    /* =================================================
+       SEARCH + FILTER STATES
+    ================================================= */
+
+    const [searchText, setSearchText] =
+        useState("");
+
+
+    const [priceFilter, setPriceFilter] =
+        useState("ALL");
+
+
+    const [locationFilter, setLocationFilter] =
+        useState("");
+
+
+    const [typeFilter, setTypeFilter] =
+        useState("ALL");
+
+
+    const [showFilters, setShowFilters] =
+        useState(false);
 
 
     /* =================================================
@@ -115,6 +150,7 @@ function App() {
         setShowMyBookings(false);
         setShowDashboard(false);
         setShowEditProfile(false);
+
         setSelectedPhotographer(null);
 
     };
@@ -140,6 +176,7 @@ function App() {
             try {
 
                 setLoading(true);
+
                 setError("");
 
 
@@ -156,6 +193,10 @@ function App() {
                 }
 
 
+                /* -------------------------------------
+                   EXISTING POSTS API
+                ------------------------------------- */
+
                 const postsData =
                     await getAllPosts(token);
 
@@ -164,6 +205,10 @@ function App() {
                     postsData.posts || []
                 );
 
+
+                /* -------------------------------------
+                   EXISTING PHOTOGRAPHER API
+                ------------------------------------- */
 
                 if (role === "CLIENT") {
 
@@ -211,10 +256,241 @@ function App() {
 
 
     /* =================================================
+       SEARCH + FILTER LOGIC
+    ================================================= */
+
+    const filteredPhotographers =
+        useMemo(() => {
+
+            let result =
+                [...photographers];
+
+
+            /* -----------------------------------------
+               SEARCH BY NAME
+            ----------------------------------------- */
+
+            if (
+                searchText.trim()
+            ) {
+
+                const search =
+                    searchText
+                        .trim()
+                        .toLowerCase();
+
+
+                result =
+                    result.filter(
+                        photographer => {
+
+                            const name =
+                                photographer.user?.name ||
+                                photographer.name ||
+                                "";
+
+
+                            return name
+                                .toLowerCase()
+                                .includes(search);
+
+                        }
+                    );
+
+            }
+
+
+            /* -----------------------------------------
+               LOCATION FILTER
+            ----------------------------------------- */
+
+            if (
+                locationFilter.trim()
+            ) {
+
+                const location =
+                    locationFilter
+                        .trim()
+                        .toLowerCase();
+
+
+                result =
+                    result.filter(
+                        photographer => {
+
+                            const photographerLocation =
+                                photographer.location ||
+                                "";
+
+
+                            return photographerLocation
+                                .toLowerCase()
+                                .includes(
+                                    location
+                                );
+
+                        }
+                    );
+
+            }
+
+
+            /* -----------------------------------------
+               PHOTOGRAPHER TYPE
+            ----------------------------------------- */
+
+            if (
+                typeFilter !== "ALL"
+            ) {
+
+                result =
+                    result.filter(
+                        photographer => {
+
+                            const specialization =
+                                photographer.specialization ||
+                                "";
+
+
+                            return specialization
+                                .toLowerCase()
+                                .includes(
+                                    typeFilter.toLowerCase()
+                                );
+
+                        }
+                    );
+
+            }
+
+
+            /* -----------------------------------------
+               PRICE FILTER
+            ----------------------------------------- */
+
+            if (
+                priceFilter !== "ALL"
+            ) {
+
+                result =
+                    result.filter(
+                        photographer => {
+
+                            const price =
+                                Number(
+                                    photographer.pricePerEvent ||
+                                    0
+                                );
+
+
+                            if (
+                                priceFilter ===
+                                "UNDER_10000"
+                            ) {
+
+                                return price <
+                                    10000;
+
+                            }
+
+
+                            if (
+                                priceFilter ===
+                                "10000_25000"
+                            ) {
+
+                                return (
+                                    price >= 10000 &&
+                                    price <= 25000
+                                );
+
+                            }
+
+
+                            if (
+                                priceFilter ===
+                                "25000_50000"
+                            ) {
+
+                                return (
+                                    price > 25000 &&
+                                    price <= 50000
+                                );
+
+                            }
+
+
+                            if (
+                                priceFilter ===
+                                "ABOVE_50000"
+                            ) {
+
+                                return price >
+                                    50000;
+
+                            }
+
+
+                            return true;
+
+                        }
+                    );
+
+            }
+
+
+            return result;
+
+        }, [
+
+            photographers,
+
+            searchText,
+
+            priceFilter,
+
+            locationFilter,
+
+            typeFilter
+
+        ]);
+
+
+    /* =================================================
+       CLEAR FILTERS
+    ================================================= */
+
+    const clearFilters = () => {
+
+        setSearchText("");
+
+        setPriceFilter("ALL");
+
+        setLocationFilter("");
+
+        setTypeFilter("ALL");
+
+    };
+
+
+    /* =================================================
+       CHECK WHETHER FILTER IS ACTIVE
+    ================================================= */
+
+    const filtersActive =
+        searchText.trim() !== "" ||
+        locationFilter.trim() !== "" ||
+        priceFilter !== "ALL" ||
+        typeFilter !== "ALL";
+
+
+    /* =================================================
        LIKE POST
     ================================================= */
 
-    const handleLike = async (postId) => {
+    const handleLike = async (
+        postId
+    ) => {
 
         try {
 
@@ -229,27 +505,31 @@ function App() {
                 );
 
 
-            setPosts(prevPosts =>
+            setPosts(
+                previousPosts =>
 
-                prevPosts.map(post => {
+                    previousPosts.map(
+                        post => {
 
-                    if (
-                        post._id ===
-                        postId
-                    ) {
+                            if (
+                                post._id ===
+                                postId
+                            ) {
 
-                        return {
-                            ...post,
-                            likes:
-                                data.likes ||
-                                post.likes
-                        };
+                                return {
+                                    ...post,
+                                    likes:
+                                        data.likes ||
+                                        post.likes
+                                };
 
-                    }
+                            }
 
-                    return post;
 
-                })
+                            return post;
+
+                        }
+                    )
 
             );
 
@@ -280,7 +560,9 @@ function App() {
 
 
         setShowMyBookings(false);
+
         setShowDashboard(false);
+
         setShowEditProfile(false);
 
 
@@ -297,7 +579,9 @@ function App() {
 
     const handleBackFromProfile = () => {
 
-        setSelectedPhotographer(null);
+        setSelectedPhotographer(
+            null
+        );
 
     };
 
@@ -308,7 +592,9 @@ function App() {
 
     const handleBackFromBookings = () => {
 
-        setShowMyBookings(false);
+        setShowMyBookings(
+            false
+        );
 
     };
 
@@ -319,7 +605,9 @@ function App() {
 
     const handleBackFromDashboard = () => {
 
-        setShowDashboard(false);
+        setShowDashboard(
+            false
+        );
 
     };
 
@@ -330,7 +618,9 @@ function App() {
 
     const handleBackFromEditProfile = () => {
 
-        setShowEditProfile(false);
+        setShowEditProfile(
+            false
+        );
 
     };
 
@@ -376,7 +666,7 @@ function App() {
 
 
     /* =================================================
-       PHOTOGRAPHER PROFILE
+       CLIENT PHOTOGRAPHER PROFILE
     ================================================= */
 
     if (
@@ -401,7 +691,7 @@ function App() {
 
 
     /* =================================================
-       CLIENT BOOKINGS
+       CLIENT MY BOOKINGS
     ================================================= */
 
     if (
@@ -511,14 +801,15 @@ function App() {
 
                             }}
                         >
-                            📅 My Bookings
+
+                             My Bookings
+
                         </button>
 
                     )}
 
 
-                    {role ===
-                        "PHOTOGRAPHER" && (
+                    {role === "PHOTOGRAPHER" && (
 
                         <>
 
@@ -536,7 +827,9 @@ function App() {
 
                                 }}
                             >
+
                                 📋 Dashboard
+
                             </button>
 
 
@@ -554,7 +847,9 @@ function App() {
 
                                 }}
                             >
+
                                 ⚙ Edit Profile
+
                             </button>
 
                         </>
@@ -568,7 +863,9 @@ function App() {
                             handleLogout
                         }
                     >
+
                         Logout
+
                     </button>
 
                 </div>
@@ -577,12 +874,15 @@ function App() {
 
 
             {/* =========================================
-                MAIN
+                MAIN HOME
             ========================================= */}
 
             <main className="home-container">
 
-                {/* HERO */}
+
+                {/* =====================================
+                    HERO
+                ===================================== */}
 
                 <section className="home-hero">
 
@@ -592,16 +892,22 @@ function App() {
                             CAPTURE • CONNECT • CREATE
                         </span>
 
+
                         <h1>
+
                             Find the perfect
                             <br />
                             photographer.
+
                         </h1>
 
+
                         <p>
+
                             Discover talented photographers
                             and turn your special moments
                             into unforgettable memories.
+
                         </p>
 
                     </div>
@@ -628,6 +934,7 @@ function App() {
 
                     <section className="photographers-section">
 
+
                         <div className="home-section-header">
 
                             <div>
@@ -642,13 +949,282 @@ function App() {
 
                             </div>
 
+
                             <p>
+
                                 Find someone who can
                                 capture your story.
+
                             </p>
 
                         </div>
 
+
+                        {/* =================================
+                            SEARCH BAR
+                        ================================= */}
+
+                        <div className="photographer-search-area">
+
+
+                            <div className="search-bar-wrapper">
+
+                                <span className="search-icon">
+                                    🔍
+                                </span>
+
+
+                                <input
+                                    type="text"
+                                    placeholder="Search photographer by name..."
+                                    value={
+                                        searchText
+                                    }
+                                    onChange={(e) =>
+                                        setSearchText(
+                                            e.target.value
+                                        )
+                                    }
+                                />
+
+
+                                {searchText && (
+
+                                    <button
+                                        className="search-clear-button"
+                                        onClick={() =>
+                                            setSearchText("")
+                                        }
+                                    >
+                                        ×
+                                    </button>
+
+                                )}
+
+                            </div>
+
+
+                            <button
+                                className={`filter-toggle-button ${
+                                    showFilters
+                                        ? "active"
+                                        : ""
+                                }`}
+                                onClick={() =>
+                                    setShowFilters(
+                                        !showFilters
+                                    )
+                                }
+                            >
+
+                                ⚙ Filters
+
+                                {filtersActive && (
+
+                                    <span className="filter-count">
+                                        !
+                                    </span>
+
+                                )}
+
+                            </button>
+
+                        </div>
+
+
+                        {/* =================================
+                            FILTER PANEL
+                        ================================= */}
+
+                        {showFilters && (
+
+                            <div className="photographer-filter-panel">
+
+
+                                {/* PRICE */}
+
+                                <div className="filter-group">
+
+                                    <label>
+                                        Price
+                                    </label>
+
+
+                                    <select
+                                        value={
+                                            priceFilter
+                                        }
+                                        onChange={(e) =>
+                                            setPriceFilter(
+                                                e.target.value
+                                            )
+                                        }
+                                    >
+
+                                        <option value="ALL">
+                                            All Prices
+                                        </option>
+
+                                        <option value="UNDER_10000">
+                                            Under ₹10,000
+                                        </option>
+
+                                        <option value="10000_25000">
+                                            ₹10,000 - ₹25,000
+                                        </option>
+
+                                        <option value="25000_50000">
+                                            ₹25,000 - ₹50,000
+                                        </option>
+
+                                        <option value="ABOVE_50000">
+                                            Above ₹50,000
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+
+                                {/* LOCATION */}
+
+                                <div className="filter-group">
+
+                                    <label>
+                                        Location
+                                    </label>
+
+
+                                    <input
+                                        type="text"
+                                        placeholder="Example: Madurai"
+                                        value={
+                                            locationFilter
+                                        }
+                                        onChange={(e) =>
+                                            setLocationFilter(
+                                                e.target.value
+                                            )
+                                        }
+                                    />
+
+                                </div>
+
+
+                                {/* TYPE */}
+
+                                <div className="filter-group">
+
+                                    <label>
+                                        Photographer Type
+                                    </label>
+
+
+                                    <select
+                                        value={
+                                            typeFilter
+                                        }
+                                        onChange={(e) =>
+                                            setTypeFilter(
+                                                e.target.value
+                                            )
+                                        }
+                                    >
+
+                                        <option value="ALL">
+                                            All Types
+                                        </option>
+
+                                        <option value="Wedding">
+                                            Wedding
+                                        </option>
+
+                                        <option value="Candid">
+                                            Candid
+                                        </option>
+
+                                        <option value="Pre-Wedding">
+                                            Pre-Wedding
+                                        </option>
+
+                                        <option value="Birthday">
+                                            Birthday
+                                        </option>
+
+                                        <option value="Engagement">
+                                            Engagement
+                                        </option>
+
+                                        <option value="Corporate">
+                                            Corporate
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+
+                                {/* CLEAR */}
+
+                                {filtersActive && (
+
+                                    <button
+                                        className="clear-filters-button"
+                                        onClick={
+                                            clearFilters
+                                        }
+                                    >
+
+                                        Clear Filters
+
+                                    </button>
+
+                                )}
+
+                            </div>
+
+                        )}
+
+
+                        {/* =================================
+                            RESULT COUNT
+                        ================================= */}
+
+                        {!loading && (
+
+                            <div className="photographer-result-info">
+
+                                <span>
+
+                                    {filteredPhotographers.length}{" "}
+
+                                    {filteredPhotographers.length === 1
+                                        ? "photographer"
+                                        : "photographers"}{" "}
+
+                                    found
+
+                                </span>
+
+
+                                {filtersActive && (
+
+                                    <span className="filtered-label">
+
+                                        Filters applied
+
+                                    </span>
+
+                                )}
+
+                            </div>
+
+                        )}
+
+
+                        {/* =================================
+                            PHOTOGRAPHER RESULTS
+                        ================================= */}
 
                         {loading ? (
 
@@ -662,23 +1238,40 @@ function App() {
 
                             </div>
 
-                        ) : photographers.length === 0 ? (
+                        ) : filteredPhotographers.length === 0 ? (
 
                             <div className="home-empty">
 
                                 <div>
-                                    📷
+                                    🔍
                                 </div>
+
 
                                 <h3>
                                     No photographers found
                                 </h3>
 
+
                                 <p>
-                                    Photographers will appear
-                                    here once they create
-                                    their profiles.
+                                    Try changing your
+                                    search or filters.
                                 </p>
+
+
+                                {filtersActive && (
+
+                                    <button
+                                        className="empty-clear-button"
+                                        onClick={
+                                            clearFilters
+                                        }
+                                    >
+
+                                        Clear Search & Filters
+
+                                    </button>
+
+                                )}
 
                             </div>
 
@@ -686,21 +1279,24 @@ function App() {
 
                             <div className="photographer-grid">
 
-                                {photographers.map(
+                                {filteredPhotographers.map(
                                     photographer => {
 
                                         const user =
                                             photographer.user ||
                                             {};
 
+
                                         const name =
                                             user.name ||
                                             "Photographer";
+
 
                                         const image =
                                             photographer.profileImage ||
                                             user.profileImage ||
                                             "";
+
 
                                         return (
 
@@ -711,13 +1307,20 @@ function App() {
                                                 }
                                             >
 
+
+                                                {/* IMAGE */}
+
                                                 <div className="photographer-card-image">
 
                                                     {image ? (
 
                                                         <img
-                                                            src={image}
-                                                            alt={name}
+                                                            src={
+                                                                image
+                                                            }
+                                                            alt={
+                                                                name
+                                                            }
                                                         />
 
                                                     ) : (
@@ -732,10 +1335,13 @@ function App() {
 
                                                     )}
 
+
                                                     {photographer.isAvailable && (
 
                                                         <span className="available-pill">
+
                                                             ● Available
+
                                                         </span>
 
                                                     )}
@@ -743,7 +1349,10 @@ function App() {
                                                 </div>
 
 
+                                                {/* CONTENT */}
+
                                                 <div className="photographer-card-content">
+
 
                                                     <h3>
                                                         {name}
@@ -753,6 +1362,7 @@ function App() {
                                                     <p className="card-specialization">
 
                                                         📷{" "}
+
                                                         {photographer.specialization ||
                                                             "Photography"}
 
@@ -762,6 +1372,7 @@ function App() {
                                                     <p className="card-location">
 
                                                         📍{" "}
+
                                                         {photographer.location ||
                                                             "Location not specified"}
 
@@ -770,13 +1381,16 @@ function App() {
 
                                                     <div className="card-bottom">
 
+
                                                         <div>
 
                                                             <span>
                                                                 From
                                                             </span>
 
+
                                                             <strong>
+
                                                                 ₹
                                                                 {(
                                                                     photographer.pricePerEvent ||
@@ -784,6 +1398,7 @@ function App() {
                                                                 ).toLocaleString(
                                                                     "en-IN"
                                                                 )}
+
                                                             </strong>
 
                                                         </div>
@@ -797,7 +1412,9 @@ function App() {
                                                                 )
                                                             }
                                                         >
+
                                                             View Profile →
+
                                                         </button>
 
                                                     </div>
@@ -826,6 +1443,7 @@ function App() {
 
                 <section className="moments-section">
 
+
                     <div className="home-section-header">
 
                         <div>
@@ -834,15 +1452,19 @@ function App() {
                                 COMMUNITY
                             </span>
 
+
                             <h2>
                                 Latest Moments
                             </h2>
 
                         </div>
 
+
                         <p>
+
                             Stories captured by
                             our photographers.
+
                         </p>
 
                     </div>
@@ -868,13 +1490,17 @@ function App() {
                                 📸
                             </div>
 
+
                             <h3>
                                 No moments yet
                             </h3>
 
+
                             <p>
+
                                 Beautiful photographs
                                 will appear here.
+
                             </p>
 
                         </div>
@@ -883,66 +1509,76 @@ function App() {
 
                         <div className="moments-grid">
 
-                            {posts.map(post => (
+                            {posts.map(
+                                post => (
 
-                                <div
-                                    className="moment-card"
-                                    key={post._id}
-                                >
+                                    <div
+                                        className="moment-card"
+                                        key={
+                                            post._id
+                                        }
+                                    >
 
-                                    <div className="moment-image">
+                                        <div className="moment-image">
 
-                                        <img
-                                            src={
-                                                post.imageUrl
-                                            }
-                                            alt={
-                                                post.caption ||
-                                                "Photography"
-                                            }
-                                        />
-
-                                    </div>
-
-
-                                    <div className="moment-content">
-
-                                        <p>
-                                            {post.caption ||
-                                                "Beautiful moment"}
-                                        </p>
-
-
-                                        <div className="moment-footer">
-
-                                            <button
-                                                onClick={() =>
-                                                    handleLike(
-                                                        post._id
-                                                    )
+                                            <img
+                                                src={
+                                                    post.imageUrl
                                                 }
-                                            >
+                                                alt={
+                                                    post.caption ||
+                                                    "Photography"
+                                                }
+                                            />
 
-                                                ❤️{" "}
-                                                {post.likes?.length ||
-                                                    0}
-
-                                            </button>
+                                        </div>
 
 
-                                            <span>
-                                                📍{" "}
-                                                {post.location ||
-                                                    "India"}
-                                            </span>
+                                        <div className="moment-content">
+
+                                            <p>
+
+                                                {post.caption ||
+                                                    "Beautiful moment"}
+
+                                            </p>
+
+
+                                            <div className="moment-footer">
+
+                                                <button
+                                                    onClick={() =>
+                                                        handleLike(
+                                                            post._id
+                                                        )
+                                                    }
+                                                >
+
+                                                    ❤️{" "}
+
+                                                    {post.likes?.length ||
+                                                        0}
+
+                                                </button>
+
+
+                                                <span>
+
+                                                    📍{" "}
+
+                                                    {post.location ||
+                                                        "India"}
+
+                                                </span>
+
+                                            </div>
 
                                         </div>
 
                                     </div>
 
-                                </div>
-
-                            ))}
+                                )
+                            )}
 
                         </div>
 
