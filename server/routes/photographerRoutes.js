@@ -3,9 +3,9 @@ const express = require("express");
 const {
     createProfile,
     getMyProfile,
+    updateMyProfile,
     getPhotographers,
-    getPhotographerById,
-    updateMyProfile
+    getPhotographerById
 } = require("../controllers/photographerController");
 
 const protect = require("../middleware/authMiddleware");
@@ -18,7 +18,10 @@ const {
 const router = express.Router();
 
 
-// Create photographer profile
+// ==========================================
+// PHOTOGRAPHER PROFILE
+// ==========================================
+
 router.post(
     "/profile",
     protect,
@@ -26,31 +29,38 @@ router.post(
     createProfile
 );
 
-
-// Get my photographer profile
-router.get(
-    "/profile/me",
-    protect,
-    photographerOnly,
-    getMyProfile
-);
-router.get(
-    "/",
-    protect,
-    clientOnly,
-    getPhotographers
-);
-router.get(
-    "/:id",
-    protect,
-    clientOnly,
-    getPhotographerById
-);
 router.put(
     "/profile",
     protect,
     photographerOnly,
     updateMyProfile
 );
+
+router.get(
+    "/profile/me",
+    protect,
+    photographerOnly,
+    getMyProfile
+);
+
+
+// ==========================================
+// CLIENT - PHOTOGRAPHER DISCOVERY
+// ==========================================
+
+router.get(
+    "/",
+    protect,
+    clientOnly,
+    getPhotographers
+);
+
+router.get(
+    "/:id",
+    protect,
+    clientOnly,
+    getPhotographerById
+);
+
 
 module.exports = router;

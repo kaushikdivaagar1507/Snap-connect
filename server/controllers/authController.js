@@ -1,101 +1,144 @@
-const User = require("../models/User");
-const Photographer = require("../models/Photographer");
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+
+const User = require("../models/User");
+const PhotographerProfile =
+    require("../models/PhotographerProfile");
+
+
+// ==========================================
+// REGISTER USER
+// ==========================================
 
 const registerUser = async (req, res) => {
     try {
-        const { name, email, password, role, phone, location } = req.body;
-
-        if (!name || !email || !password) {
-            return res.status(400).json({
-                message: "Name, email, and password are required"
-            });
-        }
-
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({
-                message: "User already exists with this email"
-            });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // 1. Create User Document
-        const user = await User.create({
+        const {
             name,
             email,
+            password,
+            role
+        } = req.body;
+
+        // Validate required fields
+        if (!name || !email || !password) {
+            return res.status(400).json({
+                message:
+                    "Name, email and password are required"
+            });
+        }
+
+        // Check existing user
+        const existingUser =
+            await User.findOne({
+                email: email.toLowerCase()
+            });
+
+        if (existingUser) {
+            return res.status(400).json({
+                message: "User already exists"
+            });
+        }
+
+        // Hash password
+        const hashedPassword =
+            await bcrypt.hash(password, 10);
+
+        // Only allow CLIENT or PHOTOGRAPHER
+        const selectedRole =
+            role === "PHOTOGRAPHER"
+                ? "PHOTOGRAPHER"
+                : "CLIENT";
+
+        // Create user
+        const user = await User.create({
+            name,
+            email: email.toLowerCase(),
             password: hashedPassword,
-            role: role || "CLIENT"
+            role: selectedRole
         });
 
-        // 2. If Photographer, automatically create their Photographer Profile
-        if (user.role === "PHOTOGRAPHER") {
-            await Photographer.create({
+        // Automatically create photographer profile
+        if (selectedRole === "PHOTOGRAPHER") {
+            await PhotographerProfile.create({
                 user: user._id,
-                phone: phone || "",
-                location: location || "",
-                bio: "",
+                location: "",
+                specialization: "",
                 experience: 0,
                 pricePerEvent: 0,
-                specialization: [],
+                phone: "",
+                profileImage: "",
                 isAvailable: true
             });
         }
 
-        // 3. Generate JWT immediately so user stays logged in after signup
-        const token = jwt.sign(
-            { userId: user._id, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: "7d" }
-        );
-
         res.status(201).json({
-            message: "User registered successfully",
-            token,
+            message:
+                "User registered successfully",
+
             user: {
-                id: user._id,
+                _id: user._id,
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                profileImage:
+                    user.profileImage || ""
             }
         });
 
     } catch (error) {
-        console.error("Registration Error:", error.message);
+
+        console.error(
+            "Register Error:",
+            error.message
+        );
+
         res.status(500).json({
-            message: error.message || "Server error during registration"
+            message: "Server error"
         });
     }
 };
 
+
+// ==========================================
+// LOGIN USER
+// ==========================================
+
 const loginUser = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const {
+            email,
+            password
+        } = req.body;
 
         if (!email || !password) {
             return res.status(400).json({
-                message: "Email and password are required"
+                message:
+                    "Email and password are required"
             });
         }
 
-        const user = await User.findOne({ email });
+        const user =
+            await User.findOne({
+                email: email.toLowerCase()
+            });
 
         if (!user) {
             return res.status(401).json({
-                message: "Invalid email or password"
+                message:
+                    "Invalid email or password"
             });
         }
 
-        const isPasswordCorrect = await bcrypt.compare(
-            password,
-            user.password
-        );
+        const passwordMatch =
+            await bcrypt.compare(
+                password,
+                user.password
+            );
 
-        if (!isPasswordCorrect) {
+        if (!passwordMatch) {
             return res.status(401).json({
-                message: "Invalid email or password"
+                message:
+                    "Invalid email or password"
             });
         }
 
@@ -112,23 +155,32 @@ const loginUser = async (req, res) => {
 
         res.status(200).json({
             message: "Login successful",
+
             token,
+
             user: {
-                id: user._id,
+                _id: user._id,
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                profileImage:
+                    user.profileImage || ""
             }
         });
 
     } catch (error) {
-        console.error("Login Error:", error.message);
+
+        console.error(
+            "Login Error:",
+            error.message
+        );
 
         res.status(500).json({
             message: "Server error"
         });
     }
 };
+
 
 module.exports = {
     registerUser,

@@ -1,47 +1,44 @@
 const Comment = require("../models/Comment");
-const Post = require("../models/Post");
 
 
-// ==========================================
+// ===============================
 // CREATE COMMENT
-// ==========================================
+// ===============================
 const createComment = async (req, res) => {
     try {
-        const { postId } = req.params;
-        const { text } = req.body;
+        const {
+            postId
+        } = req.params;
 
-        // Check comment text
+        const {
+            text
+        } = req.body;
+
         if (!text || !text.trim()) {
             return res.status(400).json({
-                message: "Comment text is required"
+                message: "Comment cannot be empty"
             });
         }
 
-        // Check whether post exists
-        const post = await Post.findById(postId);
-
-        if (!post) {
-            return res.status(404).json({
-                message: "Post not found"
+        const comment =
+            await Comment.create({
+                post: postId,
+                user: req.user.userId,
+                text: text.trim()
             });
-        }
 
-        // Create comment
-        const comment = await Comment.create({
-            post: postId,
-            user: req.user.userId,
-            text: text.trim()
-        });
-
-        // Get user details
-        await comment.populate(
-            "user",
-            "name profileImage"
-        );
+        const populatedComment =
+            await Comment
+                .findById(comment._id)
+                .populate(
+                    "user",
+                    "name email profileImage"
+                );
 
         res.status(201).json({
-            message: "Comment added successfully",
-            comment
+            message:
+                "Comment added successfully",
+            comment: populatedComment
         });
 
     } catch (error) {
@@ -57,21 +54,31 @@ const createComment = async (req, res) => {
 };
 
 
-// ==========================================
+// ===============================
 // GET COMMENTS
-// ==========================================
+// ===============================
 const getComments = async (req, res) => {
     try {
-        const { postId } = req.params;
+        const {
+            postId
+        } = req.params;
 
-        const comments = await Comment.find({
-            post: postId
-        })
-            .populate("user", "name profileImage")
-            .sort({ createdAt: -1 });
+        const comments =
+            await Comment
+                .find({
+                    post: postId
+                })
+                .populate(
+                    "user",
+                    "name email profileImage"
+                )
+                .sort({
+                    createdAt: 1
+                });
 
         res.status(200).json({
-            message: "Comments fetched successfully",
+            message:
+                "Comments fetched successfully",
             count: comments.length,
             comments
         });

@@ -9,20 +9,21 @@ import {
 
 function PhotographerDashboard({ onBack }) {
 
-    const [bookings, setBookings] = useState([]);
+    const [bookings, setBookings] =
+        useState([]);
 
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] =
+        useState(true);
 
-    const [actionLoading, setActionLoading] = useState(null);
+    const [actionLoading, setActionLoading] =
+        useState(null);
 
-    const [error, setError] = useState("");
+    const [error, setError] =
+        useState("");
 
-    const [success, setSuccess] = useState("");
+    const [success, setSuccess] =
+        useState("");
 
-
-    // ==========================================
-    // FETCH BOOKINGS
-    // ==========================================
 
     const fetchBookings = async () => {
 
@@ -33,6 +34,7 @@ function PhotographerDashboard({ onBack }) {
 
             const token =
                 localStorage.getItem("token");
+
 
             if (!token) {
 
@@ -45,7 +47,9 @@ function PhotographerDashboard({ onBack }) {
 
 
             const data =
-                await getPhotographerBookings(token);
+                await getPhotographerBookings(
+                    token
+                );
 
 
             console.log(
@@ -57,7 +61,6 @@ function PhotographerDashboard({ onBack }) {
             setBookings(
                 data.bookings || []
             );
-
 
         } catch (err) {
 
@@ -80,10 +83,6 @@ function PhotographerDashboard({ onBack }) {
     };
 
 
-    // ==========================================
-    // LOAD ON PAGE OPEN
-    // ==========================================
-
     useEffect(() => {
 
         fetchBookings();
@@ -91,15 +90,16 @@ function PhotographerDashboard({ onBack }) {
     }, []);
 
 
-    // ==========================================
-    // ACCEPT BOOKING
-    // ==========================================
-
-    const handleAccept = async (bookingId) => {
+    const handleAccept = async (
+        bookingId
+    ) => {
 
         try {
 
-            setActionLoading(bookingId);
+            setActionLoading(
+                bookingId
+            );
+
             setError("");
             setSuccess("");
 
@@ -120,7 +120,6 @@ function PhotographerDashboard({ onBack }) {
 
 
             await fetchBookings();
-
 
         } catch (err) {
 
@@ -143,15 +142,16 @@ function PhotographerDashboard({ onBack }) {
     };
 
 
-    // ==========================================
-    // REJECT BOOKING
-    // ==========================================
-
-    const handleReject = async (bookingId) => {
+    const handleReject = async (
+        bookingId
+    ) => {
 
         try {
 
-            setActionLoading(bookingId);
+            setActionLoading(
+                bookingId
+            );
+
             setError("");
             setSuccess("");
 
@@ -172,7 +172,6 @@ function PhotographerDashboard({ onBack }) {
 
 
             await fetchBookings();
-
 
         } catch (err) {
 
@@ -195,17 +194,15 @@ function PhotographerDashboard({ onBack }) {
     };
 
 
-    // ==========================================
-    // FORMAT DATE
-    // ==========================================
-
     const formatDate = (date) => {
 
         if (!date) {
             return "Not specified";
         }
 
-        return new Date(date).toLocaleDateString(
+        return new Date(
+            date
+        ).toLocaleDateString(
             "en-IN",
             {
                 day: "2-digit",
@@ -216,41 +213,6 @@ function PhotographerDashboard({ onBack }) {
 
     };
 
-
-    // ==========================================
-    // LOADING
-    // ==========================================
-
-    if (loading) {
-
-        return (
-
-            <div className="dashboard-page">
-
-                <button
-                    className="back-button"
-                    onClick={onBack}
-                >
-                    ← Back
-                </button>
-
-
-                <div className="dashboard-loading">
-
-                    Loading dashboard...
-
-                </div>
-
-            </div>
-
-        );
-
-    }
-
-
-    // ==========================================
-    // FILTER BOOKINGS
-    // ==========================================
 
     const pendingBookings =
         bookings.filter(
@@ -273,216 +235,40 @@ function PhotographerDashboard({ onBack }) {
         );
 
 
-    // ==========================================
-    // BOOKING CARD
-    // ==========================================
+    if (loading) {
 
-    const BookingCard = ({ booking }) => (
+        return (
 
-        <div className="dashboard-booking-card">
+            <div className="dashboard-page">
 
-
-            {/* CLIENT */}
-
-            <div className="dashboard-client">
-
-                <div className="client-avatar">
-
-                    {booking.client?.profileImage ? (
-
-                        <img
-                            src={
-                                booking
-                                    .client
-                                    .profileImage
-                            }
-                            alt={
-                                booking
-                                    .client
-                                    .name
-                            }
-                        />
-
-                    ) : (
-
-                        booking.client?.name
-                            ?.charAt(0)
-                            .toUpperCase() || "C"
-
-                    )}
-
-                </div>
+                <button
+                    className="back-button"
+                    onClick={onBack}
+                >
+                    ← Back
+                </button>
 
 
-                <div>
+                <div className="dashboard-loading">
 
-                    <h3>
-
-                        {booking.client?.name ||
-                            "Client"}
-
-                    </h3>
+                    <div className="loading-spinner"></div>
 
                     <p>
-
-                        {booking.client?.email ||
-                            "No email"}
-
+                        Loading dashboard...
                     </p>
 
                 </div>
 
             </div>
 
+        );
 
-            {/* DETAILS */}
+    }
 
-            <div className="dashboard-booking-details">
-
-
-                <div>
-
-                    <span>
-                        Event
-                    </span>
-
-                    <strong>
-                        {booking.eventType}
-                    </strong>
-
-                </div>
-
-
-                <div>
-
-                    <span>
-                        Date
-                    </span>
-
-                    <strong>
-                        {formatDate(
-                            booking.eventDate
-                        )}
-                    </strong>
-
-                </div>
-
-
-                <div>
-
-                    <span>
-                        Location
-                    </span>
-
-                    <strong>
-                        📍 {booking.eventLocation}
-                    </strong>
-
-                </div>
-
-
-                <div>
-
-                    <span>
-                        Price
-                    </span>
-
-                    <strong>
-                        ₹
-                        {booking.price?.toLocaleString(
-                            "en-IN"
-                        )}
-                    </strong>
-
-                </div>
-
-            </div>
-
-
-            {/* STATUS / ACTIONS */}
-
-            <div className="dashboard-card-footer">
-
-
-                <span
-                    className={`dashboard-status ${booking.status.toLowerCase()}`}
-                >
-
-                    {booking.status === "PENDING"
-                        ? "● Pending"
-                        : booking.status === "CONFIRMED"
-                        ? "✓ Confirmed"
-                        : "✕ Rejected"}
-
-                </span>
-
-
-                {booking.status === "PENDING" && (
-
-                    <div className="booking-actions">
-
-                        <button
-                            className="accept-button"
-                            disabled={
-                                actionLoading ===
-                                booking._id
-                            }
-                            onClick={() =>
-                                handleAccept(
-                                    booking._id
-                                )
-                            }
-                        >
-
-                            {actionLoading ===
-                            booking._id
-                                ? "Processing..."
-                                : "✓ Accept"}
-
-                        </button>
-
-
-                        <button
-                            className="reject-button"
-                            disabled={
-                                actionLoading ===
-                                booking._id
-                            }
-                            onClick={() =>
-                                handleReject(
-                                    booking._id
-                                )
-                            }
-                        >
-
-                            {actionLoading ===
-                            booking._id
-                                ? "Processing..."
-                                : "✕ Reject"}
-
-                        </button>
-
-                    </div>
-
-                )}
-
-            </div>
-
-        </div>
-
-    );
-
-
-    // ==========================================
-    // MAIN
-    // ==========================================
 
     return (
 
         <div className="dashboard-page">
-
-
-            {/* HEADER */}
 
             <div className="dashboard-header">
 
@@ -510,8 +296,6 @@ function PhotographerDashboard({ onBack }) {
             </div>
 
 
-            {/* MESSAGES */}
-
             {error && (
 
                 <div className="dashboard-error">
@@ -537,7 +321,6 @@ function PhotographerDashboard({ onBack }) {
             {/* STATS */}
 
             <div className="dashboard-stats">
-
 
                 <div className="dashboard-stat">
 
@@ -625,16 +408,14 @@ function PhotographerDashboard({ onBack }) {
             </div>
 
 
-            {/* ==================================
-                PENDING
-            ================================== */}
+            {/* PENDING */}
 
             <section className="dashboard-section">
 
                 <div className="section-title">
 
                     <h2>
-                        Pending Requests
+                        Booking Requests
                     </h2>
 
                     <span>
@@ -657,8 +438,8 @@ function PhotographerDashboard({ onBack }) {
                         </h3>
 
                         <p>
-                            New booking requests will
-                            appear here.
+                            New client booking requests
+                            will appear here.
                         </p>
 
                     </div>
@@ -667,10 +448,22 @@ function PhotographerDashboard({ onBack }) {
 
                     pendingBookings.map(
                         booking => (
+
                             <BookingCard
                                 key={booking._id}
                                 booking={booking}
+                                formatDate={formatDate}
+                                actionLoading={
+                                    actionLoading
+                                }
+                                handleAccept={
+                                    handleAccept
+                                }
+                                handleReject={
+                                    handleReject
+                                }
                             />
+
                         )
                     )
 
@@ -679,9 +472,7 @@ function PhotographerDashboard({ onBack }) {
             </section>
 
 
-            {/* ==================================
-                CONFIRMED
-            ================================== */}
+            {/* CONFIRMED */}
 
             <section className="dashboard-section">
 
@@ -712,10 +503,22 @@ function PhotographerDashboard({ onBack }) {
 
                     confirmedBookings.map(
                         booking => (
+
                             <BookingCard
                                 key={booking._id}
                                 booking={booking}
+                                formatDate={formatDate}
+                                actionLoading={
+                                    actionLoading
+                                }
+                                handleAccept={
+                                    handleAccept
+                                }
+                                handleReject={
+                                    handleReject
+                                }
                             />
+
                         )
                     )
 
@@ -724,9 +527,7 @@ function PhotographerDashboard({ onBack }) {
             </section>
 
 
-            {/* ==================================
-                REJECTED
-            ================================== */}
+            {/* REJECTED */}
 
             {rejectedBookings.length > 0 && (
 
@@ -747,16 +548,259 @@ function PhotographerDashboard({ onBack }) {
 
                     {rejectedBookings.map(
                         booking => (
+
                             <BookingCard
                                 key={booking._id}
                                 booking={booking}
+                                formatDate={formatDate}
+                                actionLoading={
+                                    actionLoading
+                                }
+                                handleAccept={
+                                    handleAccept
+                                }
+                                handleReject={
+                                    handleReject
+                                }
                             />
+
                         )
                     )}
 
                 </section>
 
             )}
+
+        </div>
+
+    );
+
+}
+
+
+/* =====================================================
+   BOOKING CARD
+===================================================== */
+
+function BookingCard({
+    booking,
+    formatDate,
+    actionLoading,
+    handleAccept,
+    handleReject
+}) {
+
+    const client =
+        booking.client || {};
+
+
+    const clientName =
+        client.name ||
+        "Client";
+
+
+    return (
+
+        <div className="dashboard-booking-card">
+
+            <div className="dashboard-client">
+
+                <div className="client-avatar">
+
+                    {client.profileImage ? (
+
+                        <img
+                            src={
+                                client.profileImage
+                            }
+                            alt={
+                                clientName
+                            }
+                        />
+
+                    ) : (
+
+                        clientName
+                            .charAt(0)
+                            .toUpperCase()
+
+                    )}
+
+                </div>
+
+
+                <div>
+
+                    <h3>
+                        {clientName}
+                    </h3>
+
+                    <p>
+                        {client.email ||
+                            "No email"}
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div className="dashboard-booking-details">
+
+                <div>
+
+                    <span>
+                        Event
+                    </span>
+
+                    <strong>
+                        {booking.eventType}
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Date
+                    </span>
+
+                    <strong>
+                        {formatDate(
+                            booking.eventDate
+                        )}
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Location
+                    </span>
+
+                    <strong>
+                        📍{" "}
+                        {booking.eventLocation}
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Price
+                    </span>
+
+                    <strong>
+                        ₹
+                        {(
+                            booking.price ||
+                            0
+                        ).toLocaleString(
+                            "en-IN"
+                        )}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            {booking.message && (
+
+                <div className="booking-client-message">
+
+                    <span>
+                        Client message
+                    </span>
+
+                    <p>
+                        "{booking.message}"
+                    </p>
+
+                </div>
+
+            )}
+
+
+            <div className="dashboard-card-footer">
+
+                <span
+                    className={`dashboard-status ${
+                        booking.status?.toLowerCase()
+                    }`}
+                >
+
+                    {booking.status ===
+                        "PENDING" &&
+                        "● Pending"}
+
+                    {booking.status ===
+                        "CONFIRMED" &&
+                        "✓ Confirmed"}
+
+                    {booking.status ===
+                        "REJECTED" &&
+                        "✕ Rejected"}
+
+                </span>
+
+
+                {booking.status ===
+                    "PENDING" && (
+
+                    <div className="booking-actions">
+
+                        <button
+                            className="accept-button"
+                            disabled={
+                                actionLoading ===
+                                booking._id
+                            }
+                            onClick={() =>
+                                handleAccept(
+                                    booking._id
+                                )
+                            }
+                        >
+
+                            {actionLoading ===
+                                booking._id
+                                ? "Processing..."
+                                : "✓ Accept"}
+
+                        </button>
+
+
+                        <button
+                            className="reject-button"
+                            disabled={
+                                actionLoading ===
+                                booking._id
+                            }
+                            onClick={() =>
+                                handleReject(
+                                    booking._id
+                                )
+                            }
+                        >
+
+                            {actionLoading ===
+                                booking._id
+                                ? "Processing..."
+                                : "✕ Reject"}
+
+                        </button>
+
+                    </div>
+
+                )}
+
+            </div>
 
         </div>
 

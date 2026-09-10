@@ -8,15 +8,20 @@ const {
     getMyBookings
 } = require("../controllers/bookingController");
 
-const protect = require("../middleware/authMiddleware");
+const protect =
+    require("../middleware/authMiddleware");
 
 const {
-     clientOnly,
+    clientOnly,
     photographerOnly
 } = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
+
+// ===============================
+// CLIENT
+// ===============================
 
 // Create booking
 router.post(
@@ -26,12 +31,28 @@ router.post(
     createBooking
 );
 
+
+// Get client's bookings
+router.get(
+    "/my",
+    protect,
+    clientOnly,
+    getMyBookings
+);
+
+
+// ===============================
+// PHOTOGRAPHER
+// ===============================
+
+// Get photographer bookings
 router.get(
     "/photographer",
     protect,
     photographerOnly,
     getPhotographerBookings
 );
+
 
 // Accept booking
 router.patch(
@@ -42,7 +63,6 @@ router.patch(
 );
 
 
-
 // Reject booking
 router.patch(
     "/:bookingId/reject",
@@ -51,14 +71,5 @@ router.patch(
     rejectBooking
 );
 
-// ==========================================
-// CLIENT - VIEW MY BOOKINGS
-// ==========================================
-router.get(
-    "/my",
-    protect,
-    clientOnly,
-    getMyBookings
-);
 
 module.exports = router;

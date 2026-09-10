@@ -10,7 +10,10 @@ const protect = require("../middleware/authMiddleware");
 const router = express.Router();
 
 
-// Add comment
+// ==========================================
+// CREATE COMMENT
+// ==========================================
+
 router.post(
     "/:postId/comments",
     protect,
@@ -18,7 +21,10 @@ router.post(
 );
 
 
-// Get comments
+// ==========================================
+// GET COMMENTS
+// ==========================================
+
 router.get(
     "/:postId/comments",
     protect,

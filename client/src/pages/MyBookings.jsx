@@ -1,108 +1,119 @@
 import { useEffect, useState } from "react";
-import { getMyBookings } from "../api/api";
+
+import {
+    getMyBookings
+} from "../api/api";
+
 
 function MyBookings({ onBack }) {
 
-    const [bookings, setBookings] = useState([]);
+    const [bookings, setBookings] =
+        useState([]);
 
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] =
+        useState(true);
 
-    const [error, setError] = useState("");
-
-
-    // ==========================================
-    // FETCH MY BOOKINGS
-    // ==========================================
-
-    useEffect(() => {
-
-        const fetchBookings = async () => {
-
-            try {
-
-                setLoading(true);
-                setError("");
-
-                const token =
-                    localStorage.getItem("token");
-
-                if (!token) {
-
-                    setError(
-                        "Please login again"
-                    );
-
-                    return;
-                }
+    const [error, setError] =
+        useState("");
 
 
-                const data =
-                    await getMyBookings(token);
+    const fetchBookings = async () => {
+
+        try {
+
+            setLoading(true);
+            setError("");
+
+            const token =
+                localStorage.getItem("token");
 
 
-                console.log(
-                    "📦 My Bookings:",
-                    data
-                );
-
-
-                setBookings(
-                    data.bookings || []
-                );
-
-
-            } catch (err) {
-
-                console.error(
-                    "My Bookings Error:",
-                    err
-                );
+            if (!token) {
 
                 setError(
-                    err.message ||
-                    "Failed to load bookings"
+                    "Please login again."
                 );
 
-            } finally {
-
-                setLoading(false);
-
+                return;
             }
 
-        };
+
+            const data =
+                await getMyBookings(token);
 
 
-        fetchBookings();
+            console.log(
+                "📦 My Bookings:",
+                data
+            );
 
-    }, []);
 
+            setBookings(
+                data.bookings || []
+            );
 
-    // ==========================================
-    // STATUS CLASS
-    // ==========================================
+        } catch (err) {
 
-    const getStatusClass = (status) => {
+            console.error(
+                "My Bookings Error:",
+                err
+            );
 
-        switch (status) {
+            setError(
+                err.message ||
+                "Failed to load bookings"
+            );
 
-            case "CONFIRMED":
-                return "confirmed";
+        } finally {
 
-            case "REJECTED":
-                return "rejected";
-
-            case "PENDING":
-            default:
-                return "pending";
+            setLoading(false);
 
         }
 
     };
 
 
-    // ==========================================
-    // LOADING
-    // ==========================================
+    useEffect(() => {
+
+        fetchBookings();
+
+    }, []);
+
+
+    const formatDate = (date) => {
+
+        if (!date) {
+            return "Not specified";
+        }
+
+        return new Date(
+            date
+        ).toLocaleDateString(
+            "en-IN",
+            {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            }
+        );
+
+    };
+
+
+    const getStatusText = (status) => {
+
+        if (status === "CONFIRMED") {
+            return "✓ Confirmed";
+        }
+
+        if (status === "REJECTED") {
+            return "✕ Rejected";
+        }
+
+        return "● Pending";
+
+    };
+
 
     if (loading) {
 
@@ -119,7 +130,11 @@ function MyBookings({ onBack }) {
 
                 <div className="bookings-loading">
 
-                    Loading your bookings...
+                    <div className="loading-spinner"></div>
+
+                    <p>
+                        Loading your bookings...
+                    </p>
 
                 </div>
 
@@ -130,17 +145,12 @@ function MyBookings({ onBack }) {
     }
 
 
-    // ==========================================
-    // MAIN PAGE
-    // ==========================================
-
     return (
 
         <div className="bookings-page">
-            {/* ==================================
-                HEADER
-            ================================== */}
+
             <div className="bookings-header">
+
                 <button
                     className="back-button"
                     onClick={onBack}
@@ -156,7 +166,7 @@ function MyBookings({ onBack }) {
                     </h1>
 
                     <p>
-                        Manage your photography
+                        Track your photography
                         bookings
                     </p>
 
@@ -165,228 +175,208 @@ function MyBookings({ onBack }) {
             </div>
 
 
-            {/* ==================================
-                ERROR
-            ================================== */}
-
             {error && (
 
                 <div className="bookings-error">
 
                     {error}
 
+                    <button
+                        onClick={fetchBookings}
+                    >
+                        Retry
+                    </button>
+
                 </div>
 
             )}
 
 
-            {/* ==================================
-                NO BOOKINGS
-            ================================== */}
+            {!error &&
+                bookings.length === 0 && (
 
-            {!error && bookings.length === 0 && (
+                    <div className="no-bookings">
 
-                <div className="no-bookings">
+                        <div className="no-bookings-icon">
+                            📅
+                        </div>
 
-                    <div className="no-bookings-icon">
-                        📸
+                        <h2>
+                            No bookings yet
+                        </h2>
+
+                        <p>
+                            Find a photographer and
+                            book them for your next
+                            special event.
+                        </p>
+
                     </div>
 
-                    <h2>
-                        No bookings yet
-                    </h2>
+                )}
 
-                    <p>
-                        Find a photographer and
-                        book your next event.
-                    </p>
-
-                </div>
-
-            )}
-
-
-            {/* ==================================
-                BOOKING LIST
-            ================================== */}
 
             <div className="bookings-list">
 
-                {bookings.map((booking) => (
+                {bookings.map((booking) => {
 
-                    <div
-                        className="booking-item"
-                        key={booking._id}
-                    >
+                    const photographer =
+                        booking.photographer;
 
 
-                        {/* PHOTOGRAPHER */}
-
-                        <div className="booking-photographer">
-
-                            <div className="booking-avatar">
-
-                                {booking.photographer?.profileImage ? (
-
-                                    <img
-                                        src={
-                                            booking
-                                                .photographer
-                                                .profileImage
-                                        }
-                                        alt={
-                                            booking
-                                                .photographer
-                                                .name
-                                        }
-                                    />
-
-                                ) : (
-
-                                    booking
-                                        .photographer
-                                        ?.name
-                                        ?.charAt(0)
-                                        .toUpperCase()
-
-                                )}
-
-                            </div>
+                    const photographerName =
+                        photographer?.name ||
+                        "Photographer";
 
 
-                            <div>
-
-                                <h2>
-
-                                    {booking
-                                        .photographer
-                                        ?.name ||
-                                        "Photographer"}
-
-                                </h2>
-
-                                <p>
-
-                                    📸 Photographer
-
-                                </p>
-
-                            </div>
-
-                        </div>
+                    const photographerImage =
+                        photographer?.profileImage ||
+                        "";
 
 
-                        {/* BOOKING DETAILS */}
+                    return (
 
-                        <div className="booking-details">
+                        <div
+                            className="booking-item"
+                            key={booking._id}
+                        >
 
+                            <div className="booking-photographer">
 
-                            <div className="booking-detail">
+                                <div className="booking-avatar">
 
-                                <span>
-                                    Event
-                                </span>
+                                    {photographerImage ? (
 
-                                <strong>
-                                    {booking.eventType}
-                                </strong>
-
-                            </div>
-
-
-                            <div className="booking-detail">
-
-                                <span>
-                                    Date
-                                </span>
-
-                                <strong>
-
-                                    {booking.eventDate
-                                        ? new Date(
-                                            booking.eventDate
-                                        ).toLocaleDateString(
-                                            "en-IN",
-                                            {
-                                                day: "2-digit",
-                                                month: "short",
-                                                year: "numeric"
+                                        <img
+                                            src={
+                                                photographerImage
                                             }
-                                        )
-                                        : "Not specified"}
+                                            alt={
+                                                photographerName
+                                            }
+                                        />
 
-                                </strong>
+                                    ) : (
 
-                            </div>
+                                        <span>
 
+                                            {photographerName
+                                                .charAt(0)
+                                                .toUpperCase()}
 
-                            <div className="booking-detail">
+                                        </span>
 
-                                <span>
-                                    Location
-                                </span>
-
-                                <strong>
-
-                                    📍{" "}
-                                    {booking.eventLocation}
-
-                                </strong>
-
-                            </div>
-
-
-                            <div className="booking-detail">
-
-                                <span>
-                                    Price
-                                </span>
-
-                                <strong>
-
-                                    ₹
-                                    {booking.price?.toLocaleString(
-                                        "en-IN"
                                     )}
 
-                                </strong>
+                                </div>
+
+
+                                <div className="booking-details">
+
+                                    <h3>
+                                        {photographerName}
+                                    </h3>
+
+                                    <p>
+                                        📷{" "}
+                                        {booking.eventType}
+                                    </p>
+
+                                </div>
 
                             </div>
 
 
+                            <div className="booking-information">
+
+                                <div className="booking-detail">
+
+                                    <span>
+                                        Event Date
+                                    </span>
+
+                                    <strong>
+                                        {formatDate(
+                                            booking.eventDate
+                                        )}
+                                    </strong>
+
+                                </div>
+
+
+                                <div className="booking-detail">
+
+                                    <span>
+                                        Location
+                                    </span>
+
+                                    <strong>
+                                        📍{" "}
+                                        {booking.eventLocation}
+                                    </strong>
+
+                                </div>
+
+
+                                <div className="booking-detail">
+
+                                    <span>
+                                        Price
+                                    </span>
+
+                                    <strong>
+                                        ₹
+                                        {(
+                                            booking.price ||
+                                            0
+                                        ).toLocaleString(
+                                            "en-IN"
+                                        )}
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+
+                            <div className="booking-status-container">
+
+                                <span
+                                    className={`booking-status ${
+                                        booking.status?.toLowerCase()
+                                    }`}
+                                >
+
+                                    {getStatusText(
+                                        booking.status
+                                    )}
+
+                                </span>
+
+
+                                <span className="booking-status-message">
+
+                                    {booking.status ===
+                                        "PENDING" &&
+                                        "Waiting for photographer"}
+
+                                    {booking.status ===
+                                        "CONFIRMED" &&
+                                        "Photographer accepted your booking"}
+
+                                    {booking.status ===
+                                        "REJECTED" &&
+                                        "Photographer rejected this booking"}
+
+                                </span>
+
+                            </div>
+
                         </div>
 
+                    );
 
-                        {/* STATUS */}
-
-                        <div className="booking-status-container">
-
-                            <span className="status-label">
-                                Status
-                            </span>
-
-                            <span
-                                className={`booking-status ${getStatusClass(
-                                    booking.status
-                                )}`}
-                            >
-
-                                {booking.status ===
-                                "CONFIRMED"
-                                    ? "✓ Confirmed"
-                                    : booking.status ===
-                                      "REJECTED"
-                                    ? "✕ Rejected"
-                                    : "● Pending"}
-
-                            </span>
-
-                        </div>
-
-
-                    </div>
-
-                ))}
+                })}
 
             </div>
 
