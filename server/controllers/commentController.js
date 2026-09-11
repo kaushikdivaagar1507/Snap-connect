@@ -2,94 +2,163 @@ const Comment = require("../models/Comment");
 const Post = require("../models/Post");
 
 
-// ==========================================
-// CREATE COMMENT
-// ==========================================
-const createComment = async (req, res) => {
-    try {
-        const { postId } = req.params;
-        const { text } = req.body;
+/* =====================================================
+   CREATE COMMENT
+===================================================== */
 
-        // Check comment text
-        if (!text || !text.trim()) {
+const createComment = async (
+    req,
+    res
+) => {
+
+    try {
+
+        const {
+            postId
+        } = req.params;
+
+
+        const {
+            text
+        } = req.body;
+
+
+        if (
+            !text ||
+            !text.trim()
+        ) {
+
             return res.status(400).json({
-                message: "Comment text is required"
+                message:
+                    "Comment cannot be empty"
             });
+
         }
 
-        // Check whether post exists
-        const post = await Post.findById(postId);
+
+        const post =
+            await Post.findById(
+                postId
+            );
+
 
         if (!post) {
+
             return res.status(404).json({
-                message: "Post not found"
+                message:
+                    "Post not found"
             });
+
         }
 
-        // Create comment
-        const comment = await Comment.create({
-            post: postId,
-            user: req.user.userId,
-            text: text.trim()
-        });
 
-        // Get user details
-        await comment.populate(
-            "user",
-            "name profileImage"
-        );
+        const comment =
+            await Comment.create({
+
+                post: postId,
+
+                user:
+                    req.user.userId,
+
+                text:
+                    text.trim()
+
+            });
+
+
+        const populatedComment =
+            await Comment.findById(
+                comment._id
+            )
+            .populate(
+                "user",
+                "name profileImage role"
+            );
+
 
         res.status(201).json({
-            message: "Comment added successfully",
-            comment
+
+            message:
+                "Comment added successfully",
+
+            comment:
+                populatedComment
+
         });
 
+
     } catch (error) {
+
         console.error(
             "Create Comment Error:",
-            error.message
+            error
         );
 
         res.status(500).json({
-            message: "Server error"
+            message:
+                "Server error"
         });
+
     }
+
 };
 
 
-// ==========================================
-// GET COMMENTS
-// ==========================================
-const getComments = async (req, res) => {
-    try {
-        const { postId } = req.params;
+/* =====================================================
+   GET COMMENTS
+===================================================== */
 
-        const comments = await Comment.find({
-            post: postId
-        })
-            .populate("user", "name profileImage")
-            .sort({ createdAt: -1 });
+const getComments = async (
+    req,
+    res
+) => {
+
+    try {
+
+        const {
+            postId
+        } = req.params;
+
+
+        const comments =
+            await Comment.find({
+                post:
+                    postId
+            })
+            .populate(
+                "user",
+                "name profileImage role"
+            )
+            .sort({
+                createdAt: 1
+            });
+
 
         res.status(200).json({
-            message: "Comments fetched successfully",
-            count: comments.length,
             comments
         });
 
+
     } catch (error) {
+
         console.error(
             "Get Comments Error:",
-            error.message
+            error
         );
 
         res.status(500).json({
-            message: "Server error"
+            message:
+                "Server error"
         });
+
     }
+
 };
 
 
 module.exports = {
+
     createComment,
     getComments
+
 };

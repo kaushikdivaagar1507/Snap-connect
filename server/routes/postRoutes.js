@@ -2,21 +2,39 @@ const express = require("express");
 
 const {
     createPost,
-    getPhotographerPosts,
     getAllPosts,
+    getPhotographerPosts,
     toggleLike
 } = require("../controllers/postController");
 
-const protect = require("../middleware/authMiddleware");
+const protect =
+    require("../middleware/authMiddleware");
 
 const {
     photographerOnly
 } = require("../middleware/roleMiddleware");
 
-const router = express.Router();
+
+const router =
+    express.Router();
 
 
-// Create post
+/* =====================================================
+   ALL POSTS
+===================================================== */
+
+router.get(
+    "/",
+    protect,
+    getAllPosts
+);
+
+
+/* =====================================================
+   CREATE POST
+   PHOTOGRAPHER ONLY
+===================================================== */
+
 router.post(
     "/",
     protect,
@@ -25,15 +43,10 @@ router.post(
 );
 
 
-// Get all posts - Home Feed
-router.get(
-    "/",
-    protect,
-    getAllPosts
-);
+/* =====================================================
+   PHOTOGRAPHER POSTS
+===================================================== */
 
-
-// Get posts by photographer
 router.get(
     "/photographer/:photographerId",
     protect,
@@ -41,7 +54,11 @@ router.get(
 );
 
 
-// Like / Unlike post
+/* =====================================================
+   LIKE / UNLIKE
+   ALL AUTHENTICATED USERS
+===================================================== */
+
 router.post(
     "/:postId/like",
     protect,

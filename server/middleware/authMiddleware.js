@@ -1,136 +1,42 @@
-const User = require("../models/User");
-const PhotographerProfile = require("../PhotographerProfile"); // Updated import name
-const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const registerUser = async (req, res) => {
+const protect = (req, res, next) => {
     try {
-        const { name, email, password, role, phone, location } = req.body;
+        const authHeader = req.headers.authorization;
 
-        if (!name || !email || !password) {
-            return res.status(400).json({
-                message: "Name, email, and password are required"
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({
+                message: "Not authorized, token missing"
             });
         }
 
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({
-                message: "User already exists with this email"
+        const token = authHeader.split(" ")[1];
+
+        if (!token) {
+            return res.status(401).json({
+                message: "Not authorized, token missing"
             });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // 1. Create User Document
-        const user = await User.create({
-            name,
-            email,
-            password: hashedPassword,
-            role: role || "CLIENT"
-        });
-
-        // 2. If Photographer, create Profile using PhotographerProfile model
-        if (user.role === "PHOTOGRAPHER") {
-            await PhotographerProfile.create({
-                user: user._id,
-                phone: phone || "",
-                location: location || "Not Specified", // Required field in schema
-                pricePerEvent: 0,                       // Required field in schema
-                bio: "",
-                experience: 0,
-                specialization: [],
-                isAvailable: true
-            });
-        }
-
-        // 3. Generate Token
-        const token = jwt.sign(
-            { userId: user._id, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: "7d" }
+        const decoded = jwt.verify(
+            token,
+            process.env.JWT_SECRET
         );
 
-        res.status(201).json({
-            message: "User registered successfully",
-            token,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role
-            }
-        });
+        req.user = decoded;
+
+        next();
 
     } catch (error) {
-        console.error("Registration Error:", error.message);
-        res.status(500).json({
-            message: error.message || "Server error during registration"
+        console.error(
+            "Auth Middleware Error:",
+            error.message
+        );
+
+        return res.status(401).json({
+            message: "Invalid or expired token"
         });
     }
 };
 
-const loginUser = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-
-        if (!email || !password) {
-            return res.status(400).json({
-                message: "Email and password are required"
-            });
-        }
-
-        const user = await User.findOne({ email });
-
-        if (!user) {
-            return res.status(401).json({
-                message: "Invalid email or password"
-            });
-        }
-
-        const isPasswordCorrect = await bcrypt.compare(
-            password,
-            user.password
-        );
-
-        if (!isPasswordCorrect) {
-            return res.status(401).json({
-                message: "Invalid email or password"
-            });
-        }
-
-        const token = jwt.sign(
-            {
-                userId: user._id,
-                role: user.role
-            },
-            process.env.JWT_SECRET,
-            {
-                expiresIn: "7d"
-            }
-        );
-
-        res.status(200).json({
-            message: "Login successful",
-            token,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role
-            }
-        });
-
-    } catch (error) {
-        console.error("Login Error:", error.message);
-
-        res.status(500).json({
-            message: "Server error"
-        });
-    }
-};
-
-module.exports = {
-    registerUser,
-    loginUser
-};
+module.exports = protect;

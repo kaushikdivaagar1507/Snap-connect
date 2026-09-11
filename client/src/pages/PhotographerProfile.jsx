@@ -8,106 +8,110 @@ import {
 
 
 function PhotographerProfile({
-    photographerId,
+    photographer,
     onBack
 }) {
 
-    // ==========================================
-    // PROFILE STATE
-    // ==========================================
-
-    const [photographer, setPhotographer] = useState(null);
+    const [profile, setProfile] = useState(
+        photographer
+    );
 
     const [posts, setPosts] = useState([]);
 
     const [loading, setLoading] = useState(true);
 
-    const [error, setError] = useState("");
+    const [showBooking, setShowBooking] =
+        useState(false);
+
+    const [bookingLoading, setBookingLoading] =
+        useState(false);
+
+    const [bookingSuccess, setBookingSuccess] =
+        useState("");
+
+    const [bookingError, setBookingError] =
+        useState("");
 
 
-    // ==========================================
-    // BOOKING STATE
-    // ==========================================
+    const [form, setForm] = useState({
+        eventType: "WEDDING",
+        eventDate: "",
+        eventLocation: "",
+        message: ""
+    });
 
-    const [showBookingForm, setShowBookingForm] = useState(false);
-
-    const [event, setEvent] = useState("Wedding");
-
-    const [date, setDate] = useState("");
-
-    const [location, setLocation] = useState("");
-
-    const [bookingLoading, setBookingLoading] = useState(false);
-
-    const [bookingMessage, setBookingMessage] = useState("");
-
-    const [bookingError, setBookingError] = useState("");
-
-
-    // ==========================================
-    // FETCH PHOTOGRAPHER PROFILE
-    // ==========================================
 
     useEffect(() => {
 
-        const fetchProfile = async () => {
+        const loadProfile = async () => {
 
             try {
 
                 setLoading(true);
-                setError("");
 
-                const token = localStorage.getItem("token");
+                const token =
+                    localStorage.getItem("token");
 
                 if (!token) {
-                    setError("Please login again");
-                    /* CHANGE: Added setLoading(false) here to prevent the UI from getting stuck in an infinite loading state when unauthenticated */
-                    setLoading(false);
-                    return;
+                    throw new Error(
+                        "Please login again."
+                    );
                 }
 
 
-                // Get photographer profile
+                /*
+                 * photographer._id is the
+                 * PhotographerProfile ID.
+                 */
+
                 const profileData =
                     await getPhotographerById(
                         token,
-                        photographerId
+                        photographer._id
                     );
 
 
-                const profile =
-                    profileData.photographer;
+                setProfile(
+                    profileData.photographer ||
+                    profileData
+                );
 
 
-                setPhotographer(profile);
+                /*
+                 * Posts are connected to the
+                 * photographer USER ID.
+                 */
+
+                const photographerUserId =
+                    photographer.user?._id ||
+                    profileData.photographer?.user?._id ||
+                    profileData.user?._id;
 
 
-                // Get photographer posts
-                if (profile?.user?._id) {
+                if (photographerUserId) {
 
                     const postsData =
                         await getPhotographerPosts(
                             token,
-                            profile.user._id
+                            photographerUserId
                         );
 
 
                     setPosts(
                         postsData.posts || []
                     );
-
                 }
 
-
-            } catch (err) {
+            } catch (error) {
 
                 console.error(
-                    "Profile Error:",
-                    err
+                    "Profile Loading Error:",
+                    error
                 );
 
-                setError(
-                    "Failed to load photographer profile"
+                setBookingError(
+                    error.message ||
+                    "Failed to load profile"
                 );
 
             } finally {
@@ -119,81 +123,71 @@ function PhotographerProfile({
         };
 
 
-        if (photographerId) {
+        loadProfile();
 
-            fetchProfile();
-
-        }
-
-    }, [photographerId]);
+    }, [photographer]);
 
 
-    // ==========================================
-    // BOOK NOW
-    // ==========================================
+    const handleChange = (e) => {
 
-    const handleBookNow = () => {
-
-        setBookingMessage("");
-        setBookingError("");
-
-        setShowBookingForm(true);
+        setForm({
+            ...form,
+            [e.target.name]: e.target.value
+        });
 
     };
 
 
-    // ==========================================
-    // CLOSE BOOKING FORM
-    // ==========================================
-
-    const handleCloseBooking = () => {
-
-        setShowBookingForm(false);
-
-        setBookingMessage("");
-        setBookingError("");
-
-        /* CHANGE: Reset form input states when closing the booking modal */
-        setEvent("Wedding");
-        setDate("");
-        setLocation("");
-
-    };
-
-
-    // ==========================================
-    // CREATE BOOKING
-    // ==========================================
-
-    const handleBookingSubmit = async (e) => {
+    const handleBooking = async (e) => {
 
         e.preventDefault();
 
         setBookingError("");
-        setBookingMessage("");
+        setBookingSuccess("");
 
 
-        // Check required fields
-        if (!event || !date || !location) {
+        if (!form.eventType) {
 
             setBookingError(
-                "Event type, event date and event location are required"
+                "Please select an event type."
             );
 
             return;
-
         }
 
 
-        // Check photographer information
-        if (!photographer?.user?._id) {
+        if (!form.eventDate) {
 
             setBookingError(
-                "Photographer information is missing"
+                "Please select an event date."
             );
 
             return;
+        }
 
+
+        if (!form.eventLocation.trim()) {
+
+            setBookingError(
+                "Please enter the event location."
+            );
+
+            return;
+        }
+
+
+        const photographerUserId =
+            profile.user?._id ||
+            photographer.user?._id;
+
+
+        if (!photographerUserId) {
+
+            setBookingError(
+                "Photographer information is missing."
+            );
+
+            return;
         }
 
 
@@ -202,91 +196,89 @@ function PhotographerProfile({
             setBookingLoading(true);
 
 
-            // Get JWT token
             const token =
                 localStorage.getItem("token");
 
 
             if (!token) {
 
-                setBookingError(
-                    "Please login again"
+                throw new Error(
+                    "Please login again."
                 );
-
-                return;
 
             }
 
 
-            // ==========================================
-            // IMPORTANT
-            // These names MUST match the backend
-            // ==========================================
-
             const bookingData = {
 
                 photographerId:
-                    photographer.user._id,
+                    photographerUserId,
 
                 eventType:
-                    event,
+                    form.eventType,
 
                 eventDate:
-                    date,
+                    form.eventDate,
 
                 eventLocation:
-                    location
+                    form.eventLocation,
+
+                message:
+                    form.message
 
             };
 
 
             console.log(
-                "📦 Booking Data:",
+                "📸 Creating Booking:",
                 bookingData
             );
 
 
-            // Send booking request
-            const data =
-                await createBooking(
-                    token,
-                    bookingData
-                );
-
-
-            console.log(
-                "✅ Booking Created:",
-                data
+            await createBooking(
+                token,
+                bookingData
             );
 
 
-            // Show success message
-            setBookingMessage(
+            setBookingSuccess(
                 "Booking request sent successfully! 🎉"
             );
 
 
-            // Clear form
-            setEvent("Wedding");
+            setForm({
+                eventType: "WEDDING",
+                eventDate: "",
+                eventLocation: "",
+                message: ""
+            });
 
-            setDate("");
 
-            setLocation("");
+            /*
+             * Keep the success message visible
+             * for a moment, then close modal.
+             */
+
+            setTimeout(() => {
+
+                setShowBooking(false);
+
+                setBookingSuccess("");
+
+            }, 1800);
 
 
         } catch (error) {
 
             console.error(
-                "❌ Booking Error:",
+                "Booking Error:",
                 error
             );
-
 
             setBookingError(
                 error.message ||
                 "Failed to create booking"
             );
-
 
         } finally {
 
@@ -297,36 +289,28 @@ function PhotographerProfile({
     };
 
 
-    // ==========================================
-    // LOADING
-    // ==========================================
-
     if (loading) {
 
         return (
 
-            <div className="profile-loading">
+            <div className="photographer-profile-page">
 
-                Loading profile...
+                <button
+                    className="back-button"
+                    onClick={onBack}
+                >
+                    ← Back
+                </button>
 
-            </div>
+                <div className="profile-loading">
 
-        );
+                    <div className="loading-spinner"></div>
 
-    }
+                    <p>
+                        Loading photographer profile...
+                    </p>
 
-
-    // ==========================================
-    // ERROR
-    // ==========================================
-
-    if (error) {
-
-        return (
-
-            <div className="profile-error">
-
-                {error}
+                </div>
 
             </div>
 
@@ -335,500 +319,259 @@ function PhotographerProfile({
     }
 
 
-    // ==========================================
-    // PROFILE NOT FOUND
-    // ==========================================
-
-    if (!photographer) {
-
-        return (
-
-            <div className="profile-error">
-
-                Photographer not found
-
-            </div>
-
-        );
-
-    }
+    const user =
+        profile?.user ||
+        photographer?.user ||
+        {};
 
 
-    // ==========================================
-    // MAIN PROFILE
-    // ==========================================
+    const name =
+        user.name ||
+        profile?.name ||
+        "Photographer";
+
+
+    const profileImage =
+        profile?.profileImage ||
+        user.profileImage ||
+        "";
+
+
+    const location =
+        profile?.location ||
+        "Location not specified";
+
+
+    const specialization =
+        profile?.specialization ||
+        "Photography";
+
+
+    const experience =
+        profile?.experience ?? 0;
+
+
+    const price =
+        profile?.pricePerEvent ?? 0;
+
+
+    const isAvailable =
+        profile?.isAvailable !== false;
+
 
     return (
 
-        <div className="photographer-page">
+        <div className="photographer-profile-page">
+
+            {/* =========================================
+                HEADER
+            ========================================= */}
+
+            <div className="profile-topbar">
+
+                <button
+                    className="back-button"
+                    onClick={onBack}
+                >
+                    ← Back
+                </button>
+
+                <span className="profile-topbar-title">
+                    Photographer Profile
+                </span>
+
+            </div>
 
 
-            {/* ==========================================
-                BACK BUTTON
-            ========================================== */}
-
-            <button
-                className="back-button"
-                onClick={onBack}
-                /* CHANGE: Explicitly specified type="button" to prevent unintended form triggers */
-                type="button"
-            >
-
-                ← Back
-
-            </button>
-
-
-            {/* ==========================================
+            {/* =========================================
                 PROFILE HEADER
-            ========================================== */}
+            ========================================= */}
 
-            <section className="photographer-header">
+            <section className="photographer-profile-header">
 
+                <div className="large-profile-avatar">
 
-                {/* PROFILE IMAGE */}
-
-                <div className="photographer-avatar">
-
-                    {photographer.user?.profileImage ? (
+                    {profileImage ? (
 
                         <img
-                            src={
-                                photographer.user.profileImage
-                            }
-                            alt={
-                                photographer.user.name || "Photographer Profile"
-                            }
+                            src={profileImage}
+                            alt={name}
                         />
 
                     ) : (
 
-                        photographer.user?.name
-                            ?.charAt(0)
-                            .toUpperCase()
+                        <span>
+                            {name
+                                .charAt(0)
+                                .toUpperCase()}
+                        </span>
 
                     )}
 
                 </div>
 
 
-                {/* PROFILE INFO */}
+                <div className="profile-main-info">
 
-                <div className="photographer-info">
-
-
-                    {/* NAME + BUTTONS */}
-
-                    <div className="photographer-name-row">
+                    <div className="profile-name-row">
 
                         <h1>
-
-                            {photographer.user?.name}
-
+                            {name}
                         </h1>
 
+                        {isAvailable && (
 
-                        <button
-                            className="follow-button"
-                            type="button"
-                        >
+                            <span className="available-badge">
+                                ● Available
+                            </span>
 
-                            Follow
-
-                        </button>
-
-
-                        <button
-                            className="book-button"
-                            type="button"
-                            onClick={handleBookNow}
-                        >
-
-                            Book Now
-
-                        </button>
+                        )}
 
                     </div>
 
 
-                    {/* STATS */}
+                    <p className="profile-specialization">
+
+                        📷 {specialization}
+
+                    </p>
+
+
+                    <p className="profile-location">
+
+                        📍 {location}
+
+                    </p>
+
 
                     <div className="profile-stats">
 
-                        <span>
+                        <div>
+
+                            <strong>
+                                {experience}
+                            </strong>
+
+                            <span>
+                                Years Experience
+                            </span>
+
+                        </div>
+
+
+                        <div>
+
+                            <strong>
+                                ₹{price.toLocaleString("en-IN")}
+                            </strong>
+
+                            <span>
+                                Starting Price
+                            </span>
+
+                        </div>
+
+
+                        <div>
 
                             <strong>
                                 {posts.length}
-                            </strong>{" "}
-                            posts
+                            </strong>
 
-                        </span>
-
-
-                        <span>
-
-                            <strong>
-                                {photographer.experience || 0}
-                            </strong>{" "}
-                            years experience
-
-                        </span>
-
-                    </div>
-
-
-                    {/* PROFILE DETAILS */}
-
-                    <div className="profile-details">
-
-                        <strong>
-
-                            {photographer.user?.name}
-
-                        </strong>
-
-
-                        <p>
-
-                            {photographer.bio ||
-                                "Professional photographer"}
-
-                        </p>
-
-
-                        <p>
-
-                            📍 {photographer.location}
-
-                        </p>
-
-
-                        <p>
-
-                            📸{" "}
-
-                            {/* CHANGE: Added optional chaining and empty array fallback to prevent runtime errors if specialization is undefined */}
-                            {(photographer.specialization || []).join(
-                                " • "
-                            )}
-
-                        </p>
-
-
-                        <p>
-
-                            💰 ₹
-                            {photographer.pricePerEvent?.toLocaleString(
-                                "en-IN"
-                            )}{" "}
-                            / event
-
-                        </p>
-
-
-                        <p>
-
-                            📞 {photographer.phone}
-
-                        </p>
-
-
-                        <p>
-
-                            <span className={
-                                photographer.isAvailable
-                                    ? "available"
-                                    : "unavailable"
-                            }>
-                                {/* CHANGE: Wrapped textual availability indicator inside a span wrapper for robust CSS targeting */}
-                                {photographer.isAvailable
-                                    ? "● Available for bookings"
-                                    : "● Currently unavailable"}
+                            <span>
+                                Posts
                             </span>
 
-                        </p>
+                        </div>
 
                     </div>
+
+
+                    <button
+                        className="profile-book-button"
+                        disabled={!isAvailable}
+                        onClick={() => {
+
+                            setBookingError("");
+                            setBookingSuccess("");
+                            setShowBooking(true);
+
+                        }}
+                    >
+
+                        {isAvailable
+                            ? "📅 Book Photographer"
+                            : "Currently Unavailable"}
+
+                    </button>
 
                 </div>
 
             </section>
 
 
-            {/* ==========================================
-                BOOKING FORM
-            ========================================== */}
+            {/* =========================================
+                ERROR
+            ========================================= */}
 
-            {showBookingForm && (
+            {bookingError &&
+                !showBooking && (
 
-                <section className="booking-section">
+                    <div className="profile-page-error">
 
-                    <div className="booking-card">
-
-
-                        {/* BOOKING HEADER */}
-
-                        <div className="booking-header">
-
-                            <div>
-
-                                <h2>
-
-                                    Book{" "}
-                                    {photographer.user?.name}
-
-                                </h2>
-
-                                <p className="booking-subtitle">
-
-                                    Send a booking request
-                                    to the photographer.
-
-                                </p>
-
-                            </div>
-
-
-                            <button
-                                type="button"
-                                onClick={
-                                    handleCloseBooking
-                                }
-                            >
-
-                                ✕
-
-                            </button>
-
-                        </div>
-
-
-                        {/* BOOKING FORM */}
-
-                        <form
-                            onSubmit={
-                                handleBookingSubmit
-                            }
-                        >
-
-
-                            {/* ==================================
-                                EVENT TYPE
-                            ================================== */}
-
-                            <label>
-                                Event Type
-                            </label>
-
-
-                            <select
-                                value={event}
-                                onChange={(e) =>
-                                    setEvent(
-                                        e.target.value
-                                    )
-                                }
-                                required
-                            >
-
-                                <option value="Wedding">
-                                    Wedding
-                                </option>
-
-                                <option value="Candid">
-                                    Candid
-                                </option>
-
-                                <option value="Pre-Wedding">
-                                    Pre-Wedding
-                                </option>
-
-                                <option value="Portrait">
-                                    Portrait
-                                </option>
-
-                                <option value="Fashion">
-                                    Fashion
-                                </option>
-
-                                <option value="Event">
-                                    Event
-                                </option>
-
-                                <option value="Other">
-                                    Other
-                                </option>
-
-                            </select>
-
-
-                            {/* ==================================
-                                EVENT DATE
-                            ================================== */}
-
-                            <label>
-                                Event Date
-                            </label>
-
-
-                            <input
-                                type="date"
-                                value={date}
-                                min={
-                                    new Date()
-                                        .toISOString()
-                                        .split("T")[0]
-                                }
-                                onChange={(e) =>
-                                    setDate(
-                                        e.target.value
-                                    )
-                                }
-                                required
-                            />
-
-
-                            {/* ==================================
-                                EVENT LOCATION
-                            ================================== */}
-
-                            <label>
-                                Event Location
-                            </label>
-
-
-                            <input
-                                type="text"
-                                placeholder="Enter event location"
-                                value={location}
-                                onChange={(e) =>
-                                    setLocation(
-                                        e.target.value
-                                    )
-                                }
-                                required
-                            />
-
-
-                            {/* ==================================
-                                PRICE
-                            ================================== */}
-
-                            <div className="booking-price">
-
-                                <span>
-                                    Estimated Price
-                                </span>
-
-
-                                <strong>
-
-                                    ₹
-                                    {photographer.pricePerEvent?.toLocaleString(
-                                        "en-IN"
-                                    )}
-
-                                </strong>
-
-                            </div>
-
-
-                            {/* ==================================
-                                SUCCESS MESSAGE
-                            ================================== */}
-
-                            {bookingMessage && (
-
-                                <div className="booking-success">
-
-                                    {bookingMessage}
-
-                                </div>
-
-                            )}
-
-
-                            {/* ==================================
-                                ERROR MESSAGE
-                            ================================== */}
-
-                            {bookingError && (
-
-                                <div className="booking-error">
-
-                                    {bookingError}
-
-                                </div>
-
-                            )}
-
-
-                            {/* ==================================
-                                CONFIRM BUTTON
-                            ================================== */}
-
-                            <button
-                                type="submit"
-                                className="confirm-booking-button"
-                                disabled={bookingLoading}
-                            >
-
-                                {bookingLoading
-                                    ? "Sending..."
-                                    : "Confirm Booking"}
-
-                            </button>
-
-
-                        </form>
+                        {bookingError}
 
                     </div>
 
-                </section>
-
-            )}
+                )}
 
 
-            {/* ==========================================
-                PHOTOGRAPHER POSTS
-            ========================================== */}
+            {/* =========================================
+                PORTFOLIO
+            ========================================= */}
 
-            <section className="photographer-posts">
+            <section className="profile-portfolio">
 
+                <div className="portfolio-heading">
 
-                {/* POSTS TITLE */}
-
-                <div className="posts-title">
+                    <h2>
+                        Portfolio
+                    </h2>
 
                     <span>
-                        ▦
+                        {posts.length} posts
                     </span>
-
-                    <strong>
-                        POSTS
-                    </strong>
 
                 </div>
 
 
-                {/* NO POSTS */}
-
                 {posts.length === 0 ? (
 
-                    <div className="no-profile-posts">
+                    <div className="empty-portfolio">
 
-                        No posts yet
+                        <div>
+                            📷
+                        </div>
+
+                        <h3>
+                            No portfolio posts yet
+                        </h3>
+
+                        <p>
+                            This photographer hasn't
+                            uploaded any photos yet.
+                        </p>
 
                     </div>
 
                 ) : (
 
-                    <div className="profile-grid">
+                    <div className="portfolio-grid">
 
                         {posts.map((post) => (
 
                             <div
-                                className="profile-grid-post"
+                                className="portfolio-item"
                                 key={post._id}
                             >
 
@@ -836,26 +579,24 @@ function PhotographerProfile({
                                     src={post.imageUrl}
                                     alt={
                                         post.caption ||
-                                        "Photographer post"
+                                        "Photography"
                                     }
                                 />
 
-
-                                <div className="grid-overlay">
+                                <div className="portfolio-overlay">
 
                                     <span>
-
                                         ❤️{" "}
                                         {post.likes?.length || 0}
-
                                     </span>
 
+                                    {post.caption && (
 
-                                    <span>
+                                        <p>
+                                            {post.caption}
+                                        </p>
 
-                                        💬
-
-                                    </span>
+                                    )}
 
                                 </div>
 
@@ -870,11 +611,281 @@ function PhotographerProfile({
             </section>
 
 
+            {/* =========================================
+                BOOKING MODAL
+            ========================================= */}
+
+            {showBooking && (
+
+                <div
+                    className="booking-modal-overlay"
+                    onClick={(e) => {
+
+                        if (
+                            e.target ===
+                            e.currentTarget
+                        ) {
+                            setShowBooking(false);
+                        }
+
+                    }}
+                >
+
+                    <div className="booking-modal">
+
+                        <button
+                            className="booking-close"
+                            onClick={() =>
+                                setShowBooking(false)
+                            }
+                        >
+                            ×
+                        </button>
+
+
+                        <div className="booking-modal-header">
+
+                            <div className="booking-modal-icon">
+                                📅
+                            </div>
+
+                            <div>
+
+                                <h2>
+                                    Book {name}
+                                </h2>
+
+                                <p>
+                                    Tell us about your event
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        {bookingError && (
+
+                            <div className="booking-error">
+
+                                {bookingError}
+
+                            </div>
+
+                        )}
+
+
+                        {bookingSuccess && (
+
+                            <div className="booking-success">
+
+                                {bookingSuccess}
+
+                            </div>
+
+                        )}
+
+
+                        <form
+                            className="booking-form"
+                            onSubmit={handleBooking}
+                        >
+
+                            {/* EVENT TYPE */}
+
+                            <div className="booking-form-group">
+
+                                <label>
+                                    Event Type
+                                </label>
+
+                                <select
+                                    name="eventType"
+                                    value={
+                                        form.eventType
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
+                                >
+
+                                    <option value="WEDDING">
+                                        Wedding
+                                    </option>
+
+                                    <option value="CANDID">
+                                        Candid Photography
+                                    </option>
+
+                                    <option value="PRE-WEDDING">
+                                        Pre-Wedding
+                                    </option>
+
+                                    <option value="BIRTHDAY">
+                                        Birthday
+                                    </option>
+
+                                    <option value="ENGAGEMENT">
+                                        Engagement
+                                    </option>
+
+                                    <option value="CORPORATE">
+                                        Corporate Event
+                                    </option>
+
+                                    <option value="OTHER">
+                                        Other
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+
+                            {/* DATE */}
+
+                            <div className="booking-form-group">
+
+                                <label>
+                                    Event Date
+                                </label>
+
+                                <input
+                                    type="date"
+                                    name="eventDate"
+                                    value={
+                                        form.eventDate
+                                    }
+                                    min={
+                                        new Date()
+                                            .toISOString()
+                                            .split("T")[0]
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
+                                />
+
+                            </div>
+
+
+                            {/* LOCATION */}
+
+                            <div className="booking-form-group">
+
+                                <label>
+                                    Event Location
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="eventLocation"
+                                    placeholder="Example: Madurai, Tamil Nadu"
+                                    value={
+                                        form.eventLocation
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
+                                />
+
+                            </div>
+
+
+                            {/* MESSAGE */}
+
+                            <div className="booking-form-group">
+
+                                <label>
+                                    Message
+                                    <span>
+                                        {" "}
+                                        (Optional)
+                                    </span>
+                                </label>
+
+                                <textarea
+                                    name="message"
+                                    rows="4"
+                                    placeholder="Tell the photographer about your event..."
+                                    value={
+                                        form.message
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
+                                ></textarea>
+
+                            </div>
+
+
+                            {/* PRICE */}
+
+                            <div className="booking-price-box">
+
+                                <span>
+                                    Photographer price
+                                </span>
+
+                                <strong>
+                                    ₹
+                                    {price.toLocaleString(
+                                        "en-IN"
+                                    )}
+                                </strong>
+
+                                <small>
+                                    Final price can be
+                                    discussed with the
+                                    photographer.
+                                </small>
+
+                            </div>
+
+
+                            {/* BUTTONS */}
+
+                            <div className="booking-modal-actions">
+
+                                <button
+                                    type="button"
+                                    className="booking-cancel-button"
+                                    onClick={() =>
+                                        setShowBooking(false)
+                                    }
+                                >
+                                    Cancel
+                                </button>
+
+
+                                <button
+                                    type="submit"
+                                    className="booking-confirm-button"
+                                    disabled={
+                                        bookingLoading
+                                    }
+                                >
+
+                                    {bookingLoading
+                                        ? "Sending..."
+                                        : "Confirm Booking →"}
+
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            )}
+
         </div>
 
     );
 
 }
-
 
 export default PhotographerProfile;

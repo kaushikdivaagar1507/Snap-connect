@@ -5,49 +5,34 @@ const {
     loginUser
 } = require("../controllers/authController");
 
-const protect = require("../middleware/authMiddleware");
-
-const {
-    photographerOnly,
-    clientOnly
-} = require("../middleware/roleMiddleware");
+const protect =
+    require("../middleware/authMiddleware");
 
 const router = express.Router();
 
 
-router.post("/register", registerUser);
-
-router.post("/login", loginUser);
-
-
-router.get("/me", protect, (req, res) => {
-    res.json({
-        message: "You are authenticated!",
-        user: req.user
-    });
-});
-
-
-router.get(
-    "/photographer-test",
-    protect,
-    photographerOnly,
-    (req, res) => {
-        res.json({
-            message: "Welcome Photographer! 📸",
-            user: req.user
-        });
-    }
+// Register
+router.post(
+    "/register",
+    registerUser
 );
 
 
+// Login
+router.post(
+    "/login",
+    loginUser
+);
+
+
+// Protected test route
 router.get(
-    "/client-test",
+    "/protected",
     protect,
-    clientOnly,
     (req, res) => {
-        res.json({
-            message: "Welcome Client! 👤",
+        res.status(200).json({
+            message:
+                "You are authenticated!",
             user: req.user
         });
     }

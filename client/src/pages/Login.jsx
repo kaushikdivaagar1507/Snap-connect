@@ -1,315 +1,235 @@
 import { useState } from "react";
+import { loginUser } from "../api/api";
 
-function Login({ onLogin, onNavigateToRegister }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+function Login({ onLogin, onSignup }) {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+    const handleSubmit = async (e) => {
+        e.preventDefault();
 
-    setError("");
-    setLoading(true);
+        setError("");
 
-    try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
+        if (!email || !password) {
+            setError("Please enter your email and password.");
+            return;
+        }
 
-      const data = await response.json();
+        try {
+            setLoading(true);
 
-      if (!response.ok) {
-        throw new Error(data.message || "Login failed");
-      }
+            const data = await loginUser({
+                email,
+                password
+            });
 
-      // Save Auth details
-      localStorage.setItem("token", data.token);
-      if (data.user) {
-        localStorage.setItem("user", JSON.stringify(data.user));
-        localStorage.setItem("role", data.user.role);
-      }
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("role", data.user.role);
 
-      if (onLogin) onLogin();
+            if (onLogin) {
+                onLogin();
+            }
 
-    } catch (err) {
-      console.error("Login Error:", err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+        } catch (error) {
+            console.error("Login Error:", error);
 
-  return (
-    <div style={styles.pageContainer}>
-      <div style={styles.mainWrapper}>
+            setError(
+                error.message ||
+                "Login failed. Please check your credentials."
+            );
 
-        {/* Left Side: Mock Phone Feature Showcase */}
-        <div style={styles.phoneMockup}>
-          <div style={styles.phoneFrame}>
-            <div style={styles.phoneScreen}>
-              <div style={styles.heroContent}>
-                <span style={{ fontSize: "42px", marginBottom: "12px" }}>📸</span>
-                <h3 style={{ margin: "0 0 8px 0", fontSize: "18px", fontWeight: "600" }}>SnapConnect</h3>
-                <p style={{ color: "#a8a8a8", fontSize: "13px", margin: 0, lineHeight: "1.4" }}>
-                  Discover, book, and collaborate with top photographers around the world.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        {/* Right Side: Instagram-Style Login Container */}
-        <div style={styles.authContainer}>
+    return (
+        <div className="auth-page">
 
-          {/* Primary Login Card */}
-          <div style={styles.card}>
-            <h1 style={styles.logoText}>
-              Snap<span style={{ color: "#0095f6" }}>Connect</span>
-            </h1>
+            {/* Left Side */}
+            <div className="auth-visual">
 
-            <p style={styles.subtitle}>
-              Connect with the best photographers
-            </p>
+                <div className="auth-brand">
+                    <div className="brand-icon">✦</div>
 
-            {error && <div style={styles.errorMessage}>{error}</div>}
+                    <span>SnapBook</span>
+                </div>
 
-            <form onSubmit={handleLogin} style={styles.form}>
-              <div style={styles.inputWrapper}>
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  style={styles.input}
-                  required
-                />
-              </div>
+                <div className="auth-visual-content">
 
-              <div style={styles.inputWrapper}>
-                <input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  style={styles.input}
-                  required
-                />
-              </div>
+                    <p className="auth-eyebrow">
+                        CAPTURE • CONNECT • CREATE
+                    </p>
 
-              <button
-                type="submit"
-                disabled={loading || !email || !password}
-                style={{
-                  ...styles.submitBtn,
-                  opacity: loading || !email || !password ? 0.6 : 1,
-                  cursor: loading || !email || !password ? "not-allowed" : "pointer"
-                }}
-              >
-                {loading ? "Logging in..." : "Log In"}
-              </button>
-            </form>
+                    <h1>
+                        Every moment
+                        <br />
+                        deserves a story.
+                    </h1>
 
-            <div style={styles.dividerRow}>
-              <div style={styles.dividerLine} />
-              <span style={styles.dividerText}>OR</span>
-              <div style={styles.dividerLine} />
+                    <p>
+                        Discover talented photographers,
+                        share beautiful moments and turn
+                        your special events into memories
+                        that last forever.
+                    </p>
+
+                </div>
+
+                <div className="auth-visual-footer">
+                    <span>Photography marketplace</span>
+                    <span>✦</span>
+                    <span>Made for creators</span>
+                </div>
+
             </div>
 
-            <a href="#forgot" style={styles.forgotLink}>
-              Forgot password?
-            </a>
-          </div>
 
-          {/* Secondary Sign Up Box */}
-          <div style={styles.cardSecondary}>
-            <p style={{ margin: 0, fontSize: "14px", color: "#f5f5f5" }}>
-              Don't have an account?{" "}
-              <button
-                type="button"
-                onClick={onNavigateToRegister}
-                style={styles.signupBtn}
-              >
-                Sign up
-              </button>
-            </p>
-          </div>
+            {/* Right Side */}
+            <div className="auth-form-section">
+
+                <div className="auth-form-wrapper">
+
+                    <div className="mobile-brand">
+                        <div className="brand-icon">✦</div>
+                        <span>SnapBook</span>
+                    </div>
+
+                    <div className="auth-heading">
+
+                        <span className="auth-small-title">
+                            WELCOME BACK
+                        </span>
+
+                        <h2>
+                            Sign in to SnapBook
+                        </h2>
+
+                        <p>
+                            Continue your photography journey.
+                        </p>
+
+                    </div>
+
+
+                    {error && (
+                        <div className="auth-error">
+                            <span>!</span>
+                            {error}
+                        </div>
+                    )}
+
+
+                    <form
+                        className="auth-form"
+                        onSubmit={handleSubmit}
+                    >
+
+                        <div className="form-group">
+
+                            <label>
+                                Email address
+                            </label>
+
+                            <div className="input-wrapper">
+
+                                <span className="input-icon">
+                                    ✉
+                                </span>
+
+                                <input
+                                    type="email"
+                                    placeholder="you@example.com"
+                                    value={email}
+                                    onChange={(e) =>
+                                        setEmail(e.target.value)
+                                    }
+                                />
+
+                            </div>
+
+                        </div>
+
+
+                        <div className="form-group">
+
+                            <label>
+                                Password
+                            </label>
+
+                            <div className="input-wrapper">
+
+                                <span className="input-icon">
+                                    ●
+                                </span>
+
+                                <input
+                                    type="password"
+                                    placeholder="Enter your password"
+                                    value={password}
+                                    onChange={(e) =>
+                                        setPassword(e.target.value)
+                                    }
+                                />
+
+                            </div>
+
+                        </div>
+
+
+                        <button
+                            className="auth-submit-btn"
+                            type="submit"
+                            disabled={loading}
+                        >
+
+                            {loading ? (
+                                <>
+                                    <span className="spinner"></span>
+                                    Signing in...
+                                </>
+                            ) : (
+                                <>
+                                    Sign In
+                                    <span>→</span>
+                                </>
+                            )}
+
+                        </button>
+
+                    </form>
+
+
+                    <div className="auth-divider">
+                        <span>New to SnapBook?</span>
+                    </div>
+
+
+                    <button
+                        type="button"
+                        className="signup-outline-btn"
+                        onClick={onSignup}
+                    >
+                        Create a new account
+                    </button>
+
+
+                    <p className="auth-terms">
+                        By continuing, you agree to our
+                        <span> Terms of Service</span>
+                        {" "}and
+                        <span> Privacy Policy</span>.
+                    </p>
+
+                </div>
+
+            </div>
 
         </div>
-
-      </div>
-    </div>
-  );
+    );
 }
-
-// Modern Instagram Dark Palette
-const styles = {
-  pageContainer: {
-    minHeight: "100vh",
-    backgroundColor: "#000000",
-    color: "#ffffff",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-    padding: "20px"
-  },
-  mainWrapper: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "36px",
-    width: "100%",
-    maxWidth: "820px"
-  },
-  phoneMockup: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center"
-  },
-  phoneFrame: {
-    width: "260px",
-    height: "480px",
-    border: "10px solid #262626",
-    borderRadius: "36px",
-    backgroundColor: "#121212",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.6)"
-  },
-  phoneScreen: {
-    width: "100%",
-    height: "100%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "24px",
-    textAlign: "center"
-  },
-  heroContent: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center"
-  },
-  authContainer: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-    width: "100%",
-    maxWidth: "350px"
-  },
-  card: {
-    backgroundColor: "#000000",
-    border: "1px solid #262626",
-    borderRadius: "8px",
-    padding: "36px 30px 24px 30px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center"
-  },
-  logoText: {
-    fontSize: "32px",
-    fontWeight: "700",
-    margin: "0 0 4px 0",
-    letterSpacing: "-0.5px"
-  },
-  subtitle: {
-    color: "#a8a8a8",
-    fontSize: "13px",
-    margin: "0 0 24px 0",
-    textAlign: "center"
-  },
-  form: {
-    width: "100%",
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px"
-  },
-  inputWrapper: {
-    width: "100%"
-  },
-  input: {
-    width: "100%",
-    padding: "11px 10px",
-    backgroundColor: "#121212",
-    border: "1px solid #262626",
-    borderRadius: "4px",
-    color: "#ffffff",
-    fontSize: "13px",
-    outline: "none",
-    boxSizing: "border-box"
-  },
-  submitBtn: {
-    width: "100%",
-    padding: "9px",
-    marginTop: "6px",
-    backgroundColor: "#0095f6",
-    color: "#ffffff",
-    border: "none",
-    borderRadius: "8px",
-    fontWeight: "600",
-    fontSize: "14px",
-    transition: "background-color 0.2s"
-  },
-  errorMessage: {
-    backgroundColor: "rgba(237, 73, 86, 0.15)",
-    color: "#ed4956",
-    border: "1px solid #ed4956",
-    borderRadius: "4px",
-    padding: "8px",
-    fontSize: "12px",
-    marginBottom: "14px",
-    width: "100%",
-    textAlign: "center"
-  },
-  dividerRow: {
-    display: "flex",
-    alignItems: "center",
-    width: "100%",
-    margin: "20px 0 16px 0"
-  },
-  dividerLine: {
-    flex: 1,
-    height: "1px",
-    backgroundColor: "#262626"
-  },
-  dividerText: {
-    color: "#a8a8a8",
-    fontSize: "12px",
-    fontWeight: "600",
-    padding: "0 16px"
-  },
-  forgotLink: {
-    color: "#e0e0e0",
-    fontSize: "12px",
-    textDecoration: "none"
-  },
-  cardSecondary: {
-    backgroundColor: "#000000",
-    border: "1px solid #262626",
-    borderRadius: "8px",
-    padding: "20px",
-    textAlign: "center"
-  },
-  signupBtn: {
-    background: "none",
-    border: "none",
-    color: "#0095f6",
-    fontWeight: "600",
-    fontSize: "14px",
-    cursor: "pointer",
-    padding: 0
-  }
-};
 
 export default Login;

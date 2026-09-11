@@ -1,570 +1,2453 @@
-import { useEffect, useState } from "react";
-import "./App.css";
-import MyBookings from "./pages/MyBookings";
+import {
+    useEffect,
+    useMemo,
+    useState
+} from "react";
+
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+
+import PhotographerProfile
+    from "./pages/PhotographerProfile";
+
+import MyBookings
+    from "./pages/MyBookings";
+
+import PhotographerDashboard
+    from "./pages/PhotographerDashboard";
+
+import EditPhotographerProfile
+    from "./pages/EditPhotographerProfile";
+import PhotographerMyProfile
+    from "./pages/PhotographerMyProfile";
 import {
     getAllPosts,
+    getPhotographers,
     toggleLike,
     getComments,
-    createComment,
-    getPhotographers
+    createComment
 } from "./api/api";
-import EditPhotographerProfile from "./pages/EditPhotographerProfile";
-import Explore from "./pages/Explore";
-import Login from "./pages/Login";
-import PhotographerProfile from "./pages/PhotographerProfile";
-import PhotographerDashboard from "./pages/PhotographerDashboard";
+
+import "./App.css";
+
 
 function App() {
 
-    // ==========================================
-    // LOGIN STATE
-    // ==========================================
+    /* =================================================
+       AUTH
+    ================================================= */
 
-    const [isLoggedIn, setIsLoggedIn] = useState(
-        !!localStorage.getItem("token")
-    );
-    const [role, setRole] = useState(
-        localStorage.getItem("role")
-    );
+    const [isLoggedIn, setIsLoggedIn] =
+        useState(
+            !!localStorage.getItem("token")
+        );
 
-    // ==========================================
-    // POSTS & NAVIGATION STATE
-    // ==========================================
-    const [showMyBookings, setShowMyBookings] = useState(false);
-    const [posts, setPosts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-    const [showEditProfile, setShowEditProfile] = useState(false);
-    const [showExplore, setShowExplore] = useState(false);
+    const [role, setRole] =
+        useState(
+            localStorage.getItem("role")
+        );
 
-    // ==========================================
-    // COMMENTS STATE
-    // ==========================================
+    const [showSignup, setShowSignup] =
+        useState(false);
 
-    const [comments, setComments] = useState({});
-    const [commentText, setCommentText] = useState({});
 
-    // ==========================================
-    // PHOTOGRAPHER STATE
-    // ==========================================
+    /* =================================================
+       PAGE STATES
+    ================================================= */
 
-    const [selectedPhotographer, setSelectedPhotographer] = useState(null);
-    const [photographers, setPhotographers] = useState([]);
-    const [showDashboard, setShowDashboard] = useState(false);
+    const [showMyBookings, setShowMyBookings] =
+        useState(false);
 
-    // Reset all views back to Home Feed
-    const resetViews = () => {
-        setShowExplore(false);
+    const [showDashboard, setShowDashboard] =
+        useState(false);
+
+    const [showEditProfile, setShowEditProfile] =
+        useState(false);
+    const [showMyProfile, setShowMyProfile] =
+    useState(false);
+    const [
+        selectedPhotographer,
+        setSelectedPhotographer
+    ] = useState(null);
+
+
+    /* =================================================
+       DATA
+    ================================================= */
+
+    const [posts, setPosts] =
+        useState([]);
+
+    const [photographers, setPhotographers] =
+        useState([]);
+
+    const [loading, setLoading] =
+        useState(true);
+
+    const [error, setError] =
+        useState("");
+
+
+    /* =================================================
+       EXPLORE POST
+    ================================================= */
+
+        const [selectedPost, setSelectedPost] =
+            useState(null);
+        const [selectedPostComments, setSelectedPostComments] =
+            useState([]);
+
+        const [commentText, setCommentText] =
+            useState("");
+
+        const [commentsLoading, setCommentsLoading] =
+            useState(false);
+
+
+    /* =================================================
+       SEARCH + FILTER STATES
+    ================================================= */
+
+    const [searchText, setSearchText] =
+        useState("");
+
+    const [priceFilter, setPriceFilter] =
+        useState("ALL");
+
+    const [locationFilter, setLocationFilter] =
+        useState("");
+
+    const [typeFilter, setTypeFilter] =
+        useState("ALL");
+
+    const [showFilters, setShowFilters] =
+        useState(false);
+
+
+    /* =================================================
+       LOGIN
+    ================================================= */
+
+    const handleLogin = () => {
+
+        setRole(
+            localStorage.getItem("role")
+        );
+
+        setIsLoggedIn(true);
+
+        setShowSignup(false);
+
+    };
+
+
+    /* =================================================
+       LOGOUT
+    ================================================= */
+
+    const handleLogout = () => {
+
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+
+        setIsLoggedIn(false);
+        setRole(null);
+
         setShowMyBookings(false);
         setShowDashboard(false);
         setShowEditProfile(false);
+        setShowMyProfile(false);
         setSelectedPhotographer(null);
+        setSelectedPost(null);
+
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("role");
-        setIsLoggedIn(false);
-        resetViews();
+
+    /* =================================================
+       OPEN EXPLORE POST
+    ================================================= */
+
+    const handleOpenPost = async (post) => {
+
+    setSelectedPost(post);
+
+    setSelectedPostComments([]);
+
+    setCommentText("");
+
+    try {
+
+        setCommentsLoading(true);
+
+        const token =
+            localStorage.getItem("token");
+
+        const data =
+            await getComments(
+                token,
+                post._id
+            );
+
+        setSelectedPostComments(
+            data.comments || []
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Load Comments Error:",
+            error
+        );
+
+    } finally {
+
+        setCommentsLoading(false);
+
+    }
+
+};
+
+
+    /* =================================================
+       CLOSE EXPLORE POST
+    ================================================= */
+
+    const handleClosePost = () => {
+
+    setSelectedPost(null);
+
+    setSelectedPostComments([]);
+
+    setCommentText("");
+
+};
+const handleAddExploreComment =
+    async () => {
+
+        if (
+            !selectedPost ||
+            !commentText.trim()
+        ) {
+
+            return;
+
+        }
+
+
+        try {
+
+            const token =
+                localStorage.getItem("token");
+
+
+            const data =
+                await createComment(
+                    token,
+                    selectedPost._id,
+                    commentText.trim()
+                );
+
+
+            setSelectedPostComments(
+                previous => [
+                    ...previous,
+                    data.comment
+                ]
+            );
+
+
+            setCommentText("");
+
+
+        } catch (error) {
+
+            console.error(
+                "Add Comment Error:",
+                error
+            );
+
+        }
+
     };
 
-    // ==========================================
-    // FETCH POSTS + PHOTOGRAPHERS
-    // ==========================================
+    /* =================================================
+       HOME DATA
+    ================================================= */
 
     useEffect(() => {
 
         if (!isLoggedIn) {
+
             setLoading(false);
+
             return;
+
         }
 
+
         const fetchData = async () => {
+
             try {
-                const token = localStorage.getItem("token");
+
+                setLoading(true);
+
+                setError("");
+
+
+                const token =
+                    localStorage.getItem("token");
+
 
                 if (!token) {
+
                     setLoading(false);
+
                     return;
+
                 }
 
-                const postsData = await getAllPosts(token);
-                setPosts(postsData.posts || []);
+
+                /* -------------------------------------
+                   GET ALL POSTS
+                ------------------------------------- */
+
+                const postsData =
+                    await getAllPosts(token);
+
+
+                /*
+                   Sort latest → oldest
+
+                   Newest post will appear first.
+                */
+
+                const sortedPosts =
+                    [...(postsData.posts || [])]
+                        .sort(
+                            (a, b) =>
+                                new Date(
+                                    b.createdAt
+                                ) -
+                                new Date(
+                                    a.createdAt
+                                )
+                        );
+
+
+                setPosts(sortedPosts);
+
+
+                /* -------------------------------------
+                   GET PHOTOGRAPHERS
+                ------------------------------------- */
 
                 if (role === "CLIENT") {
-                    const photographersData = await getPhotographers(token);
-                    setPhotographers(photographersData.photographers || []);
+
+                    const photographersData =
+                        await getPhotographers(
+                            token
+                        );
+
+
+                    setPhotographers(
+                        photographersData.photographers ||
+                        []
+                    );
+
                 } else {
+
                     setPhotographers([]);
+
                 }
 
             } catch (err) {
-                console.error("Error fetching data:", err);
-                setError("Failed to fetch feed content.");
+
+                console.error(
+                    "Home Data Error:",
+                    err
+                );
+
+                setError(
+                    err.message ||
+                    "Failed to load home data"
+                );
+
             } finally {
+
                 setLoading(false);
+
             }
+
         };
+
 
         fetchData();
 
     }, [isLoggedIn, role]);
 
 
-    // ==========================================
-    // LOGIN PAGE ROUTE
-    // ==========================================
+    /* =================================================
+       SEARCH + FILTER LOGIC
+    ================================================= */
 
-    if (!isLoggedIn) {
-        return (
-            <Login
-                onLogin={() => {
-                    setRole(localStorage.getItem("role"));
-                    setIsLoggedIn(true);
-                }}
-            />
-        );
-    }
+    const filteredPhotographers =
+        useMemo(() => {
 
-    // ==========================================
-    // PAGE ROUTING INTERCEPTORS
-    // ==========================================
+            let result =
+                [...photographers];
 
-    if (showEditProfile) {
-        return <EditPhotographerProfile onBack={() => setShowEditProfile(false)} />;
-    }
 
-    if (showDashboard) {
-        return <PhotographerDashboard onBack={() => setShowDashboard(false)} />;
-    }
+            /* -----------------------------------------
+               SEARCH BY NAME
+            ----------------------------------------- */
 
-    if (showMyBookings) {
-            return (
-                <div className="app">
-                    <header className="navbar">
-                        <div className="logo" onClick={resetViews} style={{ cursor: "pointer" }}>
-                            Snap<span>Connect</span>
-                        </div>
-                        <div className="nav-icons">
-                            <button className="logout-button" onClick={handleLogout}>
-                                Logout
-                            </button>
-                        </div>
-                    </header>
-                    <div className="main-container full-width">
-                        <MyBookings onBack={() => setShowMyBookings(false)} />
-                    </div>
-                </div>
-            );
-        }
+            if (
+                searchText.trim()
+            ) {
 
-    if (selectedPhotographer) {
-        return (
-            <div className="app">
-                <div className="main-container full-width">
-                    <PhotographerProfile
-                        photographerId={selectedPhotographer}
-                        onBack={() => setSelectedPhotographer(null)}
-                    />
-                </div>
-            </div>
-        );
-    }
+                const search =
+                    searchText
+                        .trim()
+                        .toLowerCase();
 
-    if (showExplore) {
-        return (
-            <div className="app">
-                <div className="main-container full-width">
-                    <Explore onBack={() => setShowExplore(false)} />
-                </div>
-            </div>
-        );
-    }
 
-    // ==========================================
-    // LIKE / UNLIKE
-    // ==========================================
+                result =
+                    result.filter(
+                        photographer => {
 
-    const handleLike = async (postId) => {
+                            const name =
+                                photographer.user?.name ||
+                                photographer.name ||
+                                "";
+
+
+                            return name
+                                .toLowerCase()
+                                .includes(search);
+
+                        }
+                    );
+
+            }
+
+
+            /* -----------------------------------------
+               LOCATION FILTER
+            ----------------------------------------- */
+
+            if (
+                locationFilter.trim()
+            ) {
+
+                const location =
+                    locationFilter
+                        .trim()
+                        .toLowerCase();
+
+
+                result =
+                    result.filter(
+                        photographer => {
+
+                            const photographerLocation =
+                                photographer.location ||
+                                "";
+
+
+                            return photographerLocation
+                                .toLowerCase()
+                                .includes(
+                                    location
+                                );
+
+                        }
+                    );
+
+            }
+
+
+            /* -----------------------------------------
+               PHOTOGRAPHER TYPE
+            ----------------------------------------- */
+
+            if (
+                typeFilter !== "ALL"
+            ) {
+
+                result =
+                    result.filter(
+                        photographer => {
+
+                            const specialization =
+                                photographer.specialization ||
+                                "";
+
+
+                            return specialization
+                                .toLowerCase()
+                                .includes(
+                                    typeFilter.toLowerCase()
+                                );
+
+                        }
+                    );
+
+            }
+
+
+            /* -----------------------------------------
+               PRICE FILTER
+            ----------------------------------------- */
+
+            if (
+                priceFilter !== "ALL"
+            ) {
+
+                result =
+                    result.filter(
+                        photographer => {
+
+                            const price =
+                                Number(
+                                    photographer.pricePerEvent ||
+                                    0
+                                );
+
+
+                            if (
+                                priceFilter ===
+                                "UNDER_10000"
+                            ) {
+
+                                return price <
+                                    10000;
+
+                            }
+
+
+                            if (
+                                priceFilter ===
+                                "10000_25000"
+                            ) {
+
+                                return (
+                                    price >= 10000 &&
+                                    price <= 25000
+                                );
+
+                            }
+
+
+                            if (
+                                priceFilter ===
+                                "25000_50000"
+                            ) {
+
+                                return (
+                                    price > 25000 &&
+                                    price <= 50000
+                                );
+
+                            }
+
+
+                            if (
+                                priceFilter ===
+                                "ABOVE_50000"
+                            ) {
+
+                                return price >
+                                    50000;
+
+                            }
+
+
+                            return true;
+
+                        }
+                    );
+
+            }
+
+
+            return result;
+
+        }, [
+
+            photographers,
+
+            searchText,
+
+            priceFilter,
+
+            locationFilter,
+
+            typeFilter
+
+        ]);
+
+
+    /* =================================================
+       CLEAR FILTERS
+    ================================================= */
+
+    const clearFilters = () => {
+
+        setSearchText("");
+
+        setPriceFilter("ALL");
+
+        setLocationFilter("");
+
+        setTypeFilter("ALL");
+
+    };
+
+
+    /* =================================================
+       CHECK FILTER ACTIVE
+    ================================================= */
+
+    const filtersActive =
+        searchText.trim() !== "" ||
+        locationFilter.trim() !== "" ||
+        priceFilter !== "ALL" ||
+        typeFilter !== "ALL";
+
+
+    /* =================================================
+       LIKE POST
+    ================================================= */
+
+    const handleLike = async (
+        postId
+    ) => {
+
         try {
-            const token = localStorage.getItem("token");
-            const data = await toggleLike(token, postId);
 
-            setPosts((currentPosts) =>
-                currentPosts.map((post) => {
-                    if (post._id !== postId) return post;
-                    
-                    const likesArray = post.likes || [];
-                    const hasLiked = data.liked;
+            const token =
+                localStorage.getItem("token");
+
+
+            const data =
+                await toggleLike(
+                    token,
+                    postId
+                );
+
+
+            setPosts(
+                previousPosts =>
+
+                    previousPosts.map(
+                        post => {
+
+                            if (
+                                post._id ===
+                                postId
+                            ) {
+
+                                return {
+                                    ...post,
+                                    likes:
+                                        data.likes ||
+                                        post.likes
+                                };
+
+                            }
+
+
+                            return post;
+
+                        }
+                    )
+
+            );
+
+
+            /*
+               Also update the selected
+               Explore post if it is open.
+            */
+
+            setSelectedPost(
+                previousPost => {
+
+                    if (
+                        !previousPost ||
+                        previousPost._id !== postId
+                    ) {
+
+                        return previousPost;
+
+                    }
+
 
                     return {
-                        ...post,
-                        likes: hasLiked
-                            ? [...likesArray, "currentUser"]
-                            : likesArray.filter((user) => user !== "currentUser")
+                        ...previousPost,
+                        likes:
+                            data.likes ||
+                            previousPost.likes
                     };
-                })
+
+                }
             );
-        } catch (err) {
-            console.error("Like Error:", err);
+
+
+        } catch (error) {
+
+            console.error(
+                "Like Error:",
+                error
+            );
+
         }
+
     };
 
-    // ==========================================
-    // GET COMMENTS
-    // ==========================================
 
-    const handleGetComments = async (postId) => {
-        try {
-            const token = localStorage.getItem("token");
-            const data = await getComments(token, postId);
+    /* =================================================
+       VIEW PHOTOGRAPHER PROFILE
+    ================================================= */
 
-            setComments((prev) => ({
-                ...prev,
-                [postId]: data.comments
-            }));
-        } catch (err) {
-            console.error("Comments Error:", err);
-        }
+    const handleViewProfile = (
+        photographer
+    ) => {
+
+        console.log(
+            "👤 Opening Photographer Profile:",
+            photographer
+        );
+
+
+        setShowMyBookings(false);
+
+        setShowDashboard(false);
+
+        setShowEditProfile(false);
+
+        setSelectedPost(null);
+
+
+        setSelectedPhotographer(
+            photographer
+        );
+
     };
 
-    // ==========================================
-    // CREATE COMMENT
-    // ==========================================
 
-    const handleComment = async (postId) => {
-        try {
-            const token = localStorage.getItem("token");
-            const text = commentText[postId]?.trim();
+    /* =================================================
+       BACK FROM PROFILE
+    ================================================= */
 
-            if (!text) return;
+    const handleBackFromProfile = () => {
 
-            const data = await createComment(token, postId, text);
+        setSelectedPhotographer(
+            null
+        );
 
-            setComments((prev) => ({
-                ...prev,
-                [postId]: [data.comment, ...(prev[postId] || [])]
-            }));
-
-            setCommentText((prev) => ({
-                ...prev,
-                [postId]: ""
-            }));
-        } catch (err) {
-            console.error("Create Comment Error:", err);
-        }
     };
 
-    // ==========================================
-    // OPEN PHOTOGRAPHER PROFILE
-    // ==========================================
 
-    const openPhotographerProfile = (userId) => {
-        const profile = photographers.find((p) => p.user?._id === userId);
+    /* =================================================
+       BACK FROM BOOKINGS
+    ================================================= */
 
-        if (profile) {
-            setSelectedPhotographer(profile._id);
-        } else {
-            console.error("Photographer profile not found");
-        }
+    const handleBackFromBookings = () => {
+
+        setShowMyBookings(
+            false
+        );
+
     };
 
-    // ==========================================
-    // MAIN UI
-    // ==========================================
+
+    /* =================================================
+       BACK FROM DASHBOARD
+    ================================================= */
+
+    const handleBackFromDashboard = () => {
+
+        setShowDashboard(
+            false
+        );
+
+    };
+
+
+    /* =================================================
+       BACK FROM EDIT PROFILE
+    ================================================= */
+
+    const handleBackFromEditProfile = () => {
+
+        setShowEditProfile(
+            false
+        );
+
+    };
+
+
+    /* =================================================
+       AUTH SCREEN
+    ================================================= */
+
+    if (!isLoggedIn) {
+
+        if (showSignup) {
+
+            return (
+
+                <Signup
+                    onSignup={() =>
+                        setShowSignup(false)
+                    }
+
+                    onBackToLogin={() =>
+                        setShowSignup(false)
+                    }
+                />
+
+            );
+
+        }
+
+
+        return (
+
+            <Login
+                onLogin={
+                    handleLogin
+                }
+
+                onSignup={() =>
+                    setShowSignup(true)
+                }
+            />
+
+        );
+
+    }
+
+
+    /* =================================================
+       CLIENT PHOTOGRAPHER PROFILE
+    ================================================= */
+
+    if (
+        role === "CLIENT" &&
+        selectedPhotographer
+    ) {
+
+        return (
+
+            <PhotographerProfile
+                photographer={
+                    selectedPhotographer
+                }
+
+                onBack={
+                    handleBackFromProfile
+                }
+            />
+
+        );
+
+    }
+
+
+    /* =================================================
+       CLIENT MY BOOKINGS
+    ================================================= */
+
+    if (
+        role === "CLIENT" &&
+        showMyBookings
+    ) {
+
+        return (
+
+            <MyBookings
+                onBack={
+                    handleBackFromBookings
+                }
+            />
+
+        );
+
+    }
+
+
+    /* =================================================
+       PHOTOGRAPHER DASHBOARD
+    ================================================= */
+    /* =================================================
+   PHOTOGRAPHER MY PROFILE
+================================================= */
+
+    if (
+        role === "PHOTOGRAPHER" &&
+        showMyProfile
+    ) {
+
+        return (
+
+            <PhotographerMyProfile
+
+                onBack={() =>
+                    setShowMyProfile(false)
+                }
+
+            />
+
+        );
+
+    }
+
+    if (
+        role === "PHOTOGRAPHER" &&
+        showDashboard
+    ) {
+
+        return (
+
+            <PhotographerDashboard
+                onBack={
+                    handleBackFromDashboard
+                }
+            />
+
+        );
+
+    }
+
+
+    /* =================================================
+       PHOTOGRAPHER EDIT PROFILE
+    ================================================= */
+
+    if (
+        role === "PHOTOGRAPHER" &&
+        showEditProfile
+    ) {
+
+        return (
+
+            <EditPhotographerProfile
+                onBack={
+                    handleBackFromEditProfile
+                }
+            />
+
+        );
+
+    }
+
+
+    /* =================================================
+       MAIN HOME
+    ================================================= */
 
     return (
+
         <div className="app">
 
-            {/* NAVBAR */}
-            <header className="navbar">
-                <div className="logo" onClick={resetViews} style={{ cursor: "pointer" }}>
-                    Snap<span>Connect</span>
+
+            {/* =========================================
+                NAVBAR
+            ========================================= */}
+
+            <nav className="main-navbar">
+
+
+                <div className="navbar-logo">
+
+                    <span className="navbar-logo-icon">
+                        ✦
+                    </span>
+
+                    <span>
+                        SnapBook
+                    </span>
+
                 </div>
 
-                <div className="search-box">
-                    🔍
-                    <input
-                        type="text"
-                        placeholder="Search photographers..."
-                    />
-                </div>
 
-                <div className="nav-icons">
-                    <div className="top-navigation">
-                        {role === "CLIENT" && (
-                            <button onClick={() => setShowMyBookings(true)}>
-                                📅 My Bookings
-                            </button>
-                        )}
+                <div className="navbar-actions">
 
-                        {role === "PHOTOGRAPHER" && (
-                            <button onClick={() => setShowDashboard(true)}>
-                                📷 Photographer Dashboard
-                            </button>
-                        )}
-                        {role === "PHOTOGRAPHER" && (
-                            <button
-                                className="dashboard-button"
-                                onClick={() => setShowEditProfile(true)}
-                            >
-                                ✏️ Edit Profile
-                            </button>
-                        )}
-                        <button className="logout-button" onClick={handleLogout}>
-                            Logout
+
+                    {/* CLIENT BOOKINGS */}
+
+                    {role === "CLIENT" && (
+
+                        <button
+                            className="nav-button"
+
+                            onClick={() => {
+
+                                setSelectedPhotographer(
+                                    null
+                                );
+
+                                setSelectedPost(
+                                    null
+                                );
+
+                                setShowMyBookings(
+                                    true
+                                );
+
+                            }}
+                        >
+
+                            My Bookings
+
                         </button>
+
+                    )}
+
+
+                   {role === "PHOTOGRAPHER" && (
+
+                            <>
+
+                                <button
+                                    className="nav-button"
+
+                                    onClick={() => {
+
+                                        setShowMyProfile(true);
+
+                                        setShowDashboard(false);
+
+                                        setShowEditProfile(false);
+
+                                    }}
+                                >
+
+                                    My Profile
+
+                                </button>
+
+
+                                <button
+                                    className="nav-button"
+
+                                    onClick={() => {
+
+                                        setShowDashboard(true);
+
+                                        setShowMyProfile(false);
+
+                                        setShowEditProfile(false);
+
+                                    }}
+                                >
+
+                                    Dashboard
+
+                                </button>
+
+                            </>
+
+                        )}
+
+
+                    {/* LOGOUT */}
+
+                    <button
+                        className="logout-button"
+
+                        onClick={
+                            handleLogout
+                        }
+                    >
+
+                        Logout
+
+                    </button>
+
+
+                </div>
+
+            </nav>
+
+
+            {/* =========================================
+                MAIN HOME
+            ========================================= */}
+
+            <main className="home-container">
+
+
+                {/* =====================================
+                    HERO
+                ===================================== */}
+
+                <section className="home-hero">
+
+                    <div>
+
+                        <span className="hero-label">
+                            CAPTURE • CONNECT • CREATE
+                        </span>
+
+
+                        <h1>
+
+                            Find the perfect
+                            <br />
+
+                            photographer.
+
+                        </h1>
+
+
+                        <p>
+
+                            Discover talented photographers
+                            and turn your special moments
+                            into unforgettable memories.
+
+                        </p>
+
                     </div>
 
-                    <button onClick={resetViews}>⌂</button>
-                    <button>♡</button>
-                    <button>✉</button>
-                    <button>◯</button>
-                </div>
-            </header>
+                </section>
 
-            {/* MAIN CONTAINER */}
-            <div className="main-container">
 
-                {/* LEFT SIDEBAR */}
-                <aside className="sidebar">
-                    <button 
-                        className={`sidebar-item ${!showExplore ? "active" : ""}`} 
-                        onClick={resetViews}
-                    >
-                        <span>⌂</span>
-                        Home
-                    </button>
+                {/* =====================================
+                    ERROR
+                ===================================== */}
 
-                    <button 
-                        className={`sidebar-item ${showExplore ? "active" : ""}`}
-                        onClick={() => setShowExplore(true)}
-                    >
-                        <span>⌕</span>
-                        Explore
-                    </button>
+                {error && (
 
-                    <button className="sidebar-item">
-                        <span>＋</span>
-                        Create
-                    </button>
+                    <div className="home-error">
 
-                    <button className="sidebar-item">
-                        <span>♡</span>
-                        Activity
-                    </button>
+                        {error}
 
-                    <button className="sidebar-item">
-                        <span>◯</span>
-                        Profile
-                    </button>
-
-                    <div className="sidebar-bottom">
-                        <button className="sidebar-item">
-                            <span>☰</span>
-                            More
-                        </button>
                     </div>
-                </aside>
 
-                {/* FEED */}
-                <main className="feed">
-                    
-                    {/* STORIES */}
-                    <section className="stories">
-                        <div className="story">
-                            <div className="story-image">A</div>
-                            <p>Arun</p>
+                )}
+
+
+                {/* =================================================
+                    INSTAGRAM STYLE EXPLORE
+                ================================================= */}
+
+                {role === "CLIENT" && (
+
+                    <section className="explore-section">
+
+
+                        <div className="explore-header">
+
+                            <div>
+
+                                <span className="explore-eyebrow">
+                                    DISCOVER PHOTOGRAPHERS
+                                </span>
+
+                                <h2>
+                                    Explore
+                                </h2>
+
+                                <p>
+                                    Discover the latest moments
+                                    captured by photographers.
+                                </p>
+
+                            </div>
+
                         </div>
-                        <div className="story">
-                            <div className="story-image">K</div>
-                            <p>Kaushik</p>
-                        </div>
-                        <div className="story">
-                            <div className="story-image">P</div>
-                            <p>Priya</p>
-                        </div>
-                        <div className="story">
-                            <div className="story-image">R</div>
-                            <p>Rahul</p>
-                        </div>
-                        <div className="story">
-                            <div className="story-image">S</div>
-                            <p>Sanjay</p>
-                        </div>
-                    </section>
 
-                    {/* LOADING */}
-                    {loading && <div className="loading">Loading posts...</div>}
 
-                    {/* ERROR */}
-                    {error && <div className="error">{error}</div>}
+                        {loading ? (
 
-                    {/* POSTS */}
-                    {!loading && !error && (
-                        <section className="posts">
-                            {posts.length === 0 ? (
-                                <div className="no-posts">No posts available</div>
-                            ) : (
-                                posts.map((post) => (
-                                    <article className="post" key={post._id}>
-                                        
-                                        {/* POST HEADER */}
-                                        <div className="post-header">
-                                            <div className="user-avatar">
-                                                {post.photographer?.name
-                                                    ? post.photographer.name.charAt(0).toUpperCase()
-                                                    : "U"}
-                                            </div>
+                            <div className="explore-empty">
 
-                                            <div className="post-user-info">
-                                                <strong
-                                                    className="clickable-photographer"
-                                                    onClick={() => openPhotographerProfile(post.photographer?._id)}
-                                                >
-                                                    {post.photographer?.name || "Unknown Photographer"}
-                                                </strong>
-                                                <span>{post.location || "Location not available"}</span>
-                                            </div>
+                                <div className="explore-empty-icon">
+                                    ⏳
+                                </div>
 
-                                            <button className="more-button">•••</button>
-                                        </div>
+                                <h3>
+                                    Loading photos...
+                                </h3>
 
-                                        {/* POST IMAGE */}
-                                        <div className="post-image">
-                                            <img
-                                                src={post.imageUrl}
-                                                alt={post.caption || "Photographer post"}
-                                            />
-                                        </div>
+                                <p>
+                                    Discovering the latest
+                                    photographer moments.
+                                </p>
 
-                                        {/* POST ACTIONS */}
-                                        <div className="post-actions">
-                                            <div>
-                                                <button
-                                                    onClick={() => handleLike(post._id)}
-                                                    className="like-button"
-                                                >
-                                                    ♡
-                                                </button>
-                                                <button onClick={() => handleGetComments(post._id)}>
-                                                    💬
-                                                </button>
-                                                <button>↗</button>
-                                            </div>
-                                            <button>🔖</button>
-                                        </div>
+                            </div>
 
-                                        {/* LIKES */}
-                                        <div className="likes">
-                                            {post.likes?.length || 0} likes
-                                        </div>
+                        ) : posts.length === 0 ? (
 
-                                        {/* CAPTION */}
-                                        <div className="caption">
-                                            <strong
-                                                className="clickable-photographer"
-                                                onClick={() => openPhotographerProfile(post.photographer?._id)}
-                                            >
-                                                {post.photographer?.name || "Unknown"}
-                                            </strong>
-                                            {" "}
-                                            {post.caption || ""}
-                                        </div>
+                            <div className="explore-empty">
 
-                                        {/* VIEW COMMENTS */}
+                                <div className="explore-empty-icon">
+                                    ✦
+                                </div>
+
+                                <h3>
+                                    No photos yet
+                                </h3>
+
+                                <p>
+                                    Photographers haven't shared
+                                    their work yet.
+                                </p>
+
+                            </div>
+
+                        ) : (
+
+                            <div className="explore-grid">
+
+                                {posts.map(
+                                    post => (
+
                                         <button
-                                            className="view-comments"
-                                            onClick={() => handleGetComments(post._id)}
+                                            key={
+                                                post._id
+                                            }
+
+                                            className="explore-grid-item"
+
+                                            onClick={() =>
+                                                handleOpenPost(
+                                                    post
+                                                )
+                                            }
                                         >
-                                            View all comments
+
+                                            <img
+                                                src={
+                                                    post.imageUrl
+                                                }
+
+                                                alt={
+                                                    post.caption ||
+                                                    "Photography"
+                                                }
+                                            />
+
+
+                                            <div className="explore-grid-overlay">
+
+                                                <span>
+
+                                                    ♥{" "}
+
+                                                    {
+                                                        post.likes?.length ||
+                                                        0
+                                                    }
+
+                                                </span>
+
+
+                                                <span>
+
+                                                    {
+                                                        post.category ||
+                                                        "Photography"
+                                                    }
+
+                                                </span>
+
+                                            </div>
+
                                         </button>
 
-                                        {/* COMMENTS LIST */}
-                                        {comments[post._id]?.map((comment) => (
-                                            <div className="comment" key={comment._id}>
-                                                <strong>{comment.user?.name || "User"}</strong>
-                                                {" "}
-                                                <span>{comment.text}</span>
-                                            </div>
-                                        ))}
+                                    )
+                                )}
 
-                                        {/* COMMENT INPUT */}
-                                        <div className="comment-box">
-                                            <input
-                                                type="text"
-                                                placeholder="Add a comment..."
-                                                value={commentText[post._id] || ""}
-                                                onChange={(e) =>
-                                                    setCommentText((prev) => ({
-                                                        ...prev,
-                                                        [post._id]: e.target.value
-                                                    }))
+                            </div>
+
+                        )}
+
+                    </section>
+
+                )}
+
+
+                {/* =================================================
+                    EXPLORE PHOTO MODAL
+                ================================================= */}
+
+                {selectedPost && (
+
+                    <div
+                        className="explore-modal-backdrop"
+
+                        onClick={
+                            handleClosePost
+                        }
+                    >
+
+
+                        <div
+                            className="explore-modal"
+
+                            onClick={(e) =>
+                                e.stopPropagation()
+                            }
+                        >
+
+
+                            {/* CLOSE */}
+
+                            <button
+                                className="explore-modal-close"
+
+                                onClick={
+                                    handleClosePost
+                                }
+                            >
+
+                                ×
+
+                            </button>
+
+
+                            {/* =================================
+                                IMAGE
+                            ================================= */}
+
+                            <div className="explore-modal-image">
+
+                                <img
+                                    src={
+                                        selectedPost.imageUrl
+                                    }
+
+                                    alt={
+                                        selectedPost.caption ||
+                                        "Photography"
+                                    }
+                                />
+
+                            </div>
+
+
+                            {/* =================================
+                                DETAILS
+                            ================================= */}
+
+                            <div className="explore-modal-details">
+
+
+                                {/* ---------------------------------
+                                    PHOTOGRAPHER
+                                --------------------------------- */}
+
+                                <div className="modal-photographer">
+
+
+                                    <div className="modal-photographer-avatar">
+
+                                        {selectedPost
+                                            .photographer
+                                            ?.profileImage ? (
+
+                                            <img
+                                                src={
+                                                    selectedPost
+                                                        .photographer
+                                                        .profileImage
                                                 }
-                                                onKeyDown={(e) => {
-                                                    if (e.key === "Enter") {
-                                                        handleComment(post._id);
-                                                    }
-                                                }}
+
+                                                alt=""
                                             />
-                                            <button onClick={() => handleComment(post._id)}>
-                                                Post
-                                            </button>
+
+                                        ) : (
+
+                                            <span>
+
+                                                {
+                                                    selectedPost
+                                                        .photographer
+                                                        ?.name
+                                                        ?.charAt(0)
+                                                        ?.toUpperCase() ||
+                                                    "P"
+                                                }
+
+                                            </span>
+
+                                        )}
+
+                                    </div>
+
+
+                                    <div className="modal-photographer-info">
+
+                                        <strong>
+
+                                            {
+                                                selectedPost
+                                                    .photographer
+                                                    ?.name ||
+                                                "Photographer"
+                                            }
+
+                                        </strong>
+
+
+                                        <span>
+
+                                            {
+                                                selectedPost
+                                                    .photographerProfile
+                                                    ?.specialization ||
+                                                selectedPost.category ||
+                                                "Photography"
+                                            }
+
+                                        </span>
+
+                                    </div>
+
+
+                                    {/* VIEW PROFILE */}
+
+                                    <button
+                                        className="modal-profile-button"
+
+                                        onClick={() => {
+
+                                            const photographer =
+                                                photographers.find(
+                                                    item =>
+                                                        item.user?._id ===
+                                                        selectedPost
+                                                            .photographer
+                                                            ?._id
+                                                );
+
+
+                                            if (
+                                                photographer
+                                            ) {
+
+                                                handleClosePost();
+
+                                                handleViewProfile(
+                                                    photographer
+                                                );
+
+                                            }
+
+                                        }}
+                                    >
+
+                                        View Profile
+
+                                    </button>
+
+                                </div>
+
+
+                                {/* ---------------------------------
+                                    CAPTION
+                                --------------------------------- */}
+
+                                {selectedPost.caption && (
+
+                                    <div className="modal-caption">
+
+                                        <strong>
+
+                                            {
+                                                selectedPost
+                                                    .photographer
+                                                    ?.name ||
+                                                "Photographer"
+                                            }
+
+                                        </strong>
+
+                                        {" "}
+
+                                        {
+                                            selectedPost.caption
+                                        }
+
+                                    </div>
+
+                                )}
+
+
+                                {/* ---------------------------------
+                                    LOCATION
+                                --------------------------------- */}
+
+                                {selectedPost.location && (
+
+                                    <div className="modal-location">
+
+                                        <span>
+                                            ◉
+                                        </span>
+
+                                        {
+                                            selectedPost.location
+                                        }
+
+                                    </div>
+
+                                )}
+
+
+                                {/* ---------------------------------
+                                    CATEGORY
+                                --------------------------------- */}
+
+                                <div className="modal-category">
+
+                                    #
+                                    {
+                                        selectedPost.category ||
+                                        "Photography"
+                                    }
+
+                                </div>
+
+
+                                {/* ---------------------------------
+                                    LIKES
+                                --------------------------------- */}
+
+                               {/* ---------------------------------
+    LIKE BUTTON
+--------------------------------- */}
+
+                                <div className="modal-like-section">
+
+                                    <button
+                                        type="button"
+                                        className={`modal-like-button ${
+                                            selectedPost.likedByMe
+                                                ? "liked"
+                                                : ""
+                                        }`}
+                                        onClick={() =>
+                                            handleLike(
+                                                selectedPost._id
+                                            )
+                                        }
+                                    >
+
+                                        <span className="modal-heart">
+
+                                            {selectedPost.likedByMe
+                                                ? "♥"
+                                                : "♡"}
+
+                                        </span>
+
+                                        <span>
+
+                                            {selectedPost.likes?.length || 0}
+
+                                        </span>
+
+                                    </button>
+
+
+                                    <span className="modal-like-text">
+
+                                        {selectedPost.likes?.length === 1
+                                            ? "like"
+                                            : "likes"}
+
+                                    </span>
+
+                                </div>
+
+                                {/* =================================
+                                    COMMENTS
+                                ================================= */}
+
+                                <div className="explore-comments-section">
+
+                                    <div className="explore-comments-title">
+
+                                        💬 Comments
+
+                                        <span>
+                                            {selectedPostComments.length}
+                                        </span>
+
+                                    </div>
+
+
+                                    <div className="explore-comments-list">
+
+                                        {commentsLoading ? (
+
+                                            <p className="comments-loading">
+                                                Loading comments...
+                                            </p>
+
+                                        ) : selectedPostComments.length === 0 ? (
+
+                                            <p className="no-comments">
+                                                No comments yet. Be the first to comment.
+                                            </p>
+
+                                        ) : (
+
+                                            selectedPostComments.map(
+                                                comment => (
+
+                                                    <div
+                                                        className="explore-comment-item"
+                                                        key={
+                                                            comment._id
+                                                        }
+                                                    >
+
+                                                        <strong>
+
+                                                            {
+                                                                comment
+                                                                    .user
+                                                                    ?.name ||
+                                                                "User"
+                                                            }
+
+                                                        </strong>
+
+
+                                                        <span>
+
+                                                            {
+                                                                comment.text
+                                                            }
+
+                                                        </span>
+
+                                                    </div>
+
+                                                )
+                                            )
+
+                                        )}
+
+                                    </div>
+
+
+                                    <div className="explore-comment-input">
+
+                                        <input
+                                            type="text"
+
+                                            placeholder="Add a comment..."
+
+                                            value={
+                                                commentText
+                                            }
+
+                                            onChange={(e) =>
+                                                setCommentText(
+                                                    e.target.value
+                                                )
+                                            }
+
+                                            onKeyDown={(e) => {
+
+                                                if (
+                                                    e.key ===
+                                                    "Enter"
+                                                ) {
+
+                                                    e.preventDefault();
+
+                                                    handleAddExploreComment();
+
+                                                }
+
+                                            }}
+                                        />
+
+
+                                        <button
+                                            onClick={
+                                                handleAddExploreComment
+                                            }
+                                        >
+
+                                            Post
+
+                                        </button>
+
+                                    </div>
+
+                                </div>
+
+
+                                {/* ---------------------------------
+                                    BOOK BUTTON
+                                --------------------------------- */}
+
+                                <button
+                                    className="modal-book-button"
+
+                                    onClick={() => {
+
+                                        const photographer =
+                                            photographers.find(
+                                                item =>
+                                                    item.user?._id ===
+                                                    selectedPost
+                                                        .photographer
+                                                        ?._id
+                                            );
+
+
+                                        if (
+                                            photographer
+                                        ) {
+
+                                            handleClosePost();
+
+                                            handleViewProfile(
+                                                photographer
+                                            );
+
+                                        }
+
+                                    }}
+                                >
+
+                                    View Photographer & Book
+
+                                    <span>
+                                        →
+                                    </span>
+
+                                </button>
+
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                )}
+
+
+                {/* =================================================
+                    CLIENT PHOTOGRAPHER SEARCH
+                ================================================= */}
+
+                {role === "CLIENT" && (
+
+                    <section className="photographers-section">
+
+
+                        <div className="home-section-header">
+
+                            <div>
+
+                                <span>
+                                    DISCOVER
+                                </span>
+
+                                <h2>
+                                    Photographers
+                                </h2>
+
+                            </div>
+
+
+                            <p>
+
+                                Find someone who can
+                                capture your story.
+
+                            </p>
+
+                        </div>
+
+
+                        {/* =================================
+                            SEARCH BAR
+                        ================================= */}
+
+                        <div className="photographer-search-area">
+
+
+                            <div className="search-bar-wrapper">
+
+                                <span className="search-icon">
+                                    🔍
+                                </span>
+
+
+                                <input
+                                    type="text"
+
+                                    placeholder="Search photographer by name..."
+
+                                    value={
+                                        searchText
+                                    }
+
+                                    onChange={(e) =>
+                                        setSearchText(
+                                            e.target.value
+                                        )
+                                    }
+                                />
+
+
+                                {searchText && (
+
+                                    <button
+                                        className="search-clear-button"
+
+                                        onClick={() =>
+                                            setSearchText("")
+                                        }
+                                    >
+
+                                        ×
+
+                                    </button>
+
+                                )}
+
+                            </div>
+
+
+                            <button
+                                className={`filter-toggle-button ${
+                                    showFilters
+                                        ? "active"
+                                        : ""
+                                }`}
+
+                                onClick={() =>
+                                    setShowFilters(
+                                        !showFilters
+                                    )
+                                }
+                            >
+
+                                ⚙ Filters
+
+
+                                {filtersActive && (
+
+                                    <span className="filter-count">
+
+                                        !
+
+                                    </span>
+
+                                )}
+
+                            </button>
+
+                        </div>
+
+
+                        {/* =================================
+                            FILTER PANEL
+                        ================================= */}
+
+                        {showFilters && (
+
+                            <div className="photographer-filter-panel">
+
+
+                                {/* PRICE */}
+
+                                <div className="filter-group">
+
+                                    <label>
+                                        Price
+                                    </label>
+
+
+                                    <select
+                                        value={
+                                            priceFilter
+                                        }
+
+                                        onChange={(e) =>
+                                            setPriceFilter(
+                                                e.target.value
+                                            )
+                                        }
+                                    >
+
+                                        <option value="ALL">
+                                            All Prices
+                                        </option>
+
+                                        <option value="UNDER_10000">
+                                            Under ₹10,000
+                                        </option>
+
+                                        <option value="10000_25000">
+                                            ₹10,000 - ₹25,000
+                                        </option>
+
+                                        <option value="25000_50000">
+                                            ₹25,000 - ₹50,000
+                                        </option>
+
+                                        <option value="ABOVE_50000">
+                                            Above ₹50,000
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+
+                                {/* LOCATION */}
+
+                                <div className="filter-group">
+
+                                    <label>
+                                        Location
+                                    </label>
+
+
+                                    <input
+                                        type="text"
+
+                                        placeholder="Example: Madurai"
+
+                                        value={
+                                            locationFilter
+                                        }
+
+                                        onChange={(e) =>
+                                            setLocationFilter(
+                                                e.target.value
+                                            )
+                                        }
+                                    />
+
+                                </div>
+
+
+                                {/* TYPE */}
+
+                                <div className="filter-group">
+
+                                    <label>
+                                        Photographer Type
+                                    </label>
+
+
+                                    <select
+                                        value={
+                                            typeFilter
+                                        }
+
+                                        onChange={(e) =>
+                                            setTypeFilter(
+                                                e.target.value
+                                            )
+                                        }
+                                    >
+
+                                        <option value="ALL">
+                                            All Types
+                                        </option>
+
+                                        <option value="Wedding">
+                                            Wedding
+                                        </option>
+
+                                        <option value="Candid">
+                                            Candid
+                                        </option>
+
+                                        <option value="Pre-Wedding">
+                                            Pre-Wedding
+                                        </option>
+
+                                        <option value="Birthday">
+                                            Birthday
+                                        </option>
+
+                                        <option value="Engagement">
+                                            Engagement
+                                        </option>
+
+                                        <option value="Corporate">
+                                            Corporate
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+
+                                {/* CLEAR */}
+
+                                {filtersActive && (
+
+                                    <button
+                                        className="clear-filters-button"
+
+                                        onClick={
+                                            clearFilters
+                                        }
+                                    >
+
+                                        Clear Filters
+
+                                    </button>
+
+                                )}
+
+                            </div>
+
+                        )}
+
+
+                        {/* =================================
+                            RESULT COUNT
+                        ================================= */}
+
+                        {!loading && (
+
+                            <div className="photographer-result-info">
+
+                                <span>
+
+                                    {
+                                        filteredPhotographers.length
+                                    }{" "}
+
+                                    {
+                                        filteredPhotographers.length === 1
+                                            ? "photographer"
+                                            : "photographers"
+                                    }{" "}
+
+                                    found
+
+                                </span>
+
+
+                                {filtersActive && (
+
+                                    <span className="filtered-label">
+
+                                        Filters applied
+
+                                    </span>
+
+                                )}
+
+                            </div>
+
+                        )}
+
+
+                        {/* =================================
+                            PHOTOGRAPHER RESULTS
+                        ================================= */}
+
+                        {loading ? (
+
+                            <div className="home-loading">
+
+                                <div className="loading-spinner"></div>
+
+                                <p>
+                                    Finding photographers...
+                                </p>
+
+                            </div>
+
+                        ) : filteredPhotographers.length === 0 ? (
+
+                            <div className="home-empty">
+
+                                <div>
+                                    🔍
+                                </div>
+
+
+                                <h3>
+                                    No photographers found
+                                </h3>
+
+
+                                <p>
+                                    Try changing your
+                                    search or filters.
+                                </p>
+
+
+                                {filtersActive && (
+
+                                    <button
+                                        className="empty-clear-button"
+
+                                        onClick={
+                                            clearFilters
+                                        }
+                                    >
+
+                                        Clear Search & Filters
+
+                                    </button>
+
+                                )}
+
+                            </div>
+
+                        ) : (
+
+                            <div className="photographer-grid">
+
+                                {filteredPhotographers.map(
+                                    photographer => {
+
+                                        const user =
+                                            photographer.user ||
+                                            {};
+
+
+                                        const name =
+                                            user.name ||
+                                            "Photographer";
+
+
+                                        const image =
+                                            photographer.profileImage ||
+                                            user.profileImage ||
+                                            "";
+
+
+                                        return (
+
+                                            <div
+                                                className="photographer-card"
+
+                                                key={
+                                                    photographer._id
+                                                }
+                                            >
+
+
+                                                {/* IMAGE */}
+
+                                                <div className="photographer-card-image">
+
+                                                    {image ? (
+
+                                                        <img
+                                                            src={
+                                                                image
+                                                            }
+
+                                                            alt={
+                                                                name
+                                                            }
+                                                        />
+
+                                                    ) : (
+
+                                                        <div className="photographer-card-placeholder">
+
+                                                            {
+                                                                name
+                                                                    .charAt(0)
+                                                                    .toUpperCase()
+                                                            }
+
+                                                        </div>
+
+                                                    )}
+
+
+                                                    {photographer.isAvailable && (
+
+                                                        <span className="available-pill">
+
+                                                            ● Available
+
+                                                        </span>
+
+                                                    )}
+
+                                                </div>
+
+
+                                                {/* CONTENT */}
+
+                                                <div className="photographer-card-content">
+
+
+                                                    <h3>
+                                                        {name}
+                                                    </h3>
+
+
+                                                    <p className="card-specialization">
+
+                                                        📷{" "}
+
+                                                        {
+                                                            photographer.specialization ||
+                                                            "Photography"
+                                                        }
+
+                                                    </p>
+
+
+                                                    <p className="card-location">
+
+                                                        📍{" "}
+
+                                                        {
+                                                            photographer.location ||
+                                                            "Location not specified"
+                                                        }
+
+                                                    </p>
+
+
+                                                    <div className="card-bottom">
+
+
+                                                        <div>
+
+                                                            <span>
+                                                                From
+                                                            </span>
+
+
+                                                            <strong>
+
+                                                                ₹
+                                                                {
+                                                                    (
+                                                                        photographer.pricePerEvent ||
+                                                                        0
+                                                                    ).toLocaleString(
+                                                                        "en-IN"
+                                                                    )
+                                                                }
+
+                                                            </strong>
+
+                                                        </div>
+
+
+                                                        <button
+                                                            className="view-profile-button"
+
+                                                            onClick={() =>
+                                                                handleViewProfile(
+                                                                    photographer
+                                                                )
+                                                            }
+                                                        >
+
+                                                            View Profile →
+
+                                                        </button>
+
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+                                        );
+
+                                    }
+                                )}
+
+                            </div>
+
+                        )}
+
+                    </section>
+
+                )}
+
+
+                {/* =================================================
+                    LATEST MOMENTS
+                ================================================= */}
+
+                <section className="moments-section">
+
+
+                    <div className="home-section-header">
+
+                        <div>
+
+                            <span>
+                                COMMUNITY
+                            </span>
+
+
+                            <h2>
+                                Latest Moments
+                            </h2>
+
+                        </div>
+
+
+                        <p>
+
+                            Stories captured by
+                            our photographers.
+
+                        </p>
+
+                    </div>
+
+
+                    {loading ? (
+
+                        <div className="home-loading">
+
+                            <div className="loading-spinner"></div>
+
+                            <p>
+                                Loading moments...
+                            </p>
+
+                        </div>
+
+                    ) : posts.length === 0 ? (
+
+                        <div className="home-empty">
+
+                            <div>
+                                📸
+                            </div>
+
+
+                            <h3>
+                                No moments yet
+                            </h3>
+
+
+                            <p>
+
+                                Beautiful photographs
+                                will appear here.
+
+                            </p>
+
+                        </div>
+
+                    ) : (
+
+                        <div className="moments-grid">
+
+                            {posts.map(
+                                post => (
+
+                                    <div
+                                        className="moment-card"
+
+                                        key={
+                                            post._id
+                                        }
+                                    >
+
+                                        <div className="moment-image">
+
+                                            <img
+                                                src={
+                                                    post.imageUrl
+                                                }
+
+                                                alt={
+                                                    post.caption ||
+                                                    "Photography"
+                                                }
+                                            />
+
                                         </div>
-                                    </article>
-                                ))
+
+
+                                        <div className="moment-content">
+
+                                            <p>
+
+                                                {
+                                                    post.caption ||
+                                                    "Beautiful moment"
+                                                }
+
+                                            </p>
+
+
+                                            <div className="moment-footer">
+
+                                                <button
+                                                    onClick={() =>
+                                                        handleLike(
+                                                            post._id
+                                                        )
+                                                    }
+                                                >
+
+                                                    ❤️{" "}
+
+                                                    {
+                                                        post.likes?.length ||
+                                                        0
+                                                    }
+
+                                                </button>
+
+
+                                                <span>
+
+                                                    📍{" "}
+
+                                                    {
+                                                        post.location ||
+                                                        "India"
+                                                    }
+
+                                                </span>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                )
                             )}
-                        </section>
+
+                        </div>
+
                     )}
-                </main>
 
-                {/* RIGHT SIDEBAR */}
-                <aside className="right-sidebar">
-                    <div className="profile-preview">
-                        <div className="large-avatar">K</div>
-                        <div>
-                            <strong>Kaushik</strong>
-                            <span>Photographer</span>
-                        </div>
-                        <button>Switch</button>
-                    </div>
+                </section>
 
-                    <div className="suggestion-header">
-                        <span>Suggested photographers</span>
-                        <button>See All</button>
-                    </div>
 
-                    <div className="suggestion">
-                        <div className="suggestion-avatar">A</div>
-                        <div>
-                            <strong>Arun</strong>
-                            <span>Wedding Photographer</span>
-                        </div>
-                        <button>Follow</button>
-                    </div>
+            </main>
 
-                    <div className="suggestion">
-                        <div className="suggestion-avatar">P</div>
-                        <div>
-                            <strong>Priya</strong>
-                            <span>Candid Photographer</span>
-                        </div>
-                        <button>Follow</button>
-                    </div>
-
-                    <div className="suggestion">
-                        <div className="suggestion-avatar">R</div>
-                        <div>
-                            <strong>Rahul</strong>
-                            <span>Event Photographer</span>
-                        </div>
-                        <button>Follow</button>
-                    </div>
-                </aside>
-
-            </div>
         </div>
+
     );
+
 }
+
 
 export default App;

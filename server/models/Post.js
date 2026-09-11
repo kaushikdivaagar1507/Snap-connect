@@ -16,28 +16,21 @@ const postSchema = new mongoose.Schema(
 
         caption: {
             type: String,
-            default: "",
-            trim: true
+            trim: true,
+            maxlength: 500,
+            default: ""
         },
 
         location: {
             type: String,
-            default: "",
-            trim: true
+            trim: true,
+            default: ""
         },
 
         category: {
             type: String,
-            enum: [
-                "WEDDING",
-                "PRE_WEDDING",
-                "PORTRAIT",
-                "FASHION",
-                "EVENT",
-                "NATURE",
-                "OTHER"
-            ],
-            default: "OTHER"
+            trim: true,
+            default: "Photography"
         },
 
         likes: [
@@ -52,6 +45,4 @@ const postSchema = new mongoose.Schema(
     }
 );
 
-const Post = mongoose.model("Post", postSchema);
-
-module.exports = Post;
+module.exports = mongoose.model("Post", postSchema);

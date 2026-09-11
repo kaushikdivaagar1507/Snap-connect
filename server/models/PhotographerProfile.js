@@ -1,64 +1,56 @@
 const mongoose = require("mongoose");
 
-const photographerProfileSchema = new mongoose.Schema(
-    {
-        user: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true,
-            unique: true
-        },
+const photographerProfileSchema =
+    new mongoose.Schema(
+        {
+            user: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "User",
+                required: true,
+                unique: true
+            },
 
-        bio: {
-            type: String,
-            default: "",
-            trim: true
-        },
+            location: {
+                type: String,
+                default: ""
+            },
 
-        location: {
-            type: String,
-            required: true,
-            trim: true
-        },
+            specialization: {
+                type: String,
+                default: ""
+            },
 
-        specialization: {
-            type: [String],
-            default: []
-        },
+            experience: {
+                type: Number,
+                default: 0
+            },
 
-        experience: {
-            type: Number,
-            default: 0
-        },
+            pricePerEvent: {
+                type: Number,
+                default: 0
+            },
 
-        pricePerEvent: {
-            type: Number,
-            required: true
-        },
+            phone: {
+                type: String,
+                default: ""
+            },
 
-        phone: {
-            type: String,
-            default: ""
-        },
+            profileImage: {
+                type: String,
+                default: ""
+            },
 
-        profileImage: {
-            type: String,
-            default: ""
+            isAvailable: {
+                type: Boolean,
+                default: true
+            }
         },
-
-        isAvailable: {
-            type: Boolean,
-            default: true
+        {
+            timestamps: true
         }
-    },
-    {
-        timestamps: true
-    }
-);
+    );
 
-const PhotographerProfile = mongoose.model(
+module.exports = mongoose.model(
     "PhotographerProfile",
     photographerProfileSchema
 );
-
-module.exports = PhotographerProfile;

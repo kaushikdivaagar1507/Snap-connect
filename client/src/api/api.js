@@ -1,166 +1,272 @@
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL =
+    import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-export const getAllPosts = async (token) => {
-    const response = await fetch(`${API_BASE_URL}/posts`, {
-        method: "GET",
-        headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-        }
-    });
+/* =========================
+   AUTH
+========================= */
 
-    if (!response.ok) {
-        throw new Error("Failed to fetch posts");
-    }
+// ======================================================
+// LOGIN
+// ======================================================
 
-    return await response.json();
-};
+export const loginUser = async (credentials) => {
 
-export const toggleLike = async (token, postId) => {
     const response = await fetch(
-        `${API_BASE_URL}/posts/${postId}/like`,
+        `${API_BASE_URL}/auth/login`,
         {
             method: "POST",
+
             headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json"
-            }
-        }
-    );
-
-    if (!response.ok) {
-        throw new Error("Failed to like post");
-    }
-
-    return await response.json();
-};
-
-export const getComments = async (token, postId) => {
-    const response = await fetch(
-        `${API_BASE_URL}/posts/${postId}/comments`,
-        {
-            method: "GET",
-            headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json"
-            }
-        }
-    );
-
-    if (!response.ok) {
-        throw new Error("Failed to fetch comments");
-    }
-
-    return await response.json();
-};
-
-
-export const createComment = async (token, postId, text) => {
-    const response = await fetch(
-        `${API_BASE_URL}/posts/${postId}/comments`,
-        {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({
-                text
-            })
+
+            body: JSON.stringify(credentials)
         }
     );
 
+    const data = await response.json();
+
     if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || "Failed to add comment");
+
+        throw new Error(
+            data.message ||
+            "Login failed"
+        );
+
     }
 
-    return await response.json();
+    return data;
 };
 
-/*export const getPhotographers = async (token) => {
+
+// ======================================================
+// REGISTER
+// ======================================================
+
+export const registerUser = async (userData) => {
+
+    const response = await fetch(
+        `${API_BASE_URL}/auth/register`,
+        {
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify(userData)
+        }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+
+        throw new Error(
+            data.message ||
+            "Registration failed"
+        );
+
+    }
+
+    return data;
+};
+
+
+/* =========================
+   POSTS
+========================= */
+
+// ======================================================
+// GET ALL POSTS
+// ======================================================
+
+export const getAllPosts = async (token) => {
+
+    const response = await fetch(
+        `${API_BASE_URL}/posts`,
+        {
+            method: "GET",
+
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+
+        throw new Error(
+            data.message ||
+            "Failed to fetch posts"
+        );
+
+    }
+
+    return data;
+};
+
+// ======================================================
+// LIKE POST
+// ======================================================
+
+
+
+/* =========================
+   COMMENTS
+========================= */
+
+// ======================================================
+// LIKE / UNLIKE POST
+// ======================================================
+
+export const toggleLike = async (
+    token,
+    postId
+) => {
+
+    const response =
+        await fetch(
+            `${API_BASE_URL}/posts/${postId}/like`,
+            {
+                method: "POST",
+
+                headers: {
+                    Authorization:
+                        `Bearer ${token}`,
+
+                    "Content-Type":
+                        "application/json"
+                }
+            }
+        );
+
+
+    const data =
+        await response.json();
+
+
+    if (!response.ok) {
+
+        throw new Error(
+            data.message ||
+            "Failed to like post"
+        );
+
+    }
+
+
+    return data;
+
+};
+
+// ======================================================
+// CREATE COMMENT
+// ======================================================
+
+
+
+
+/* =========================
+   PHOTOGRAPHERS
+========================= */
+
+// ======================================================
+// GET PHOTOGRAPHERS
+// ======================================================
+
+export const getPhotographers = async (token) => {
+
     const response = await fetch(
         `${API_BASE_URL}/photographers`,
         {
             method: "GET",
+
             headers: {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json"
             }
         }
     );
-
-    if (!response.ok) {
-        throw new Error("Failed to fetch photographers");
-    }
-
-    return await response.json();
-};*/
-
-
-export const getPhotographerById = async (token, id) => {
-    const response = await fetch(
-        `${API_BASE_URL}/photographers/${id}`,
-        {
-            method: "GET",
-            headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json"
-            }
-        }
-    );
-
-    if (!response.ok) {
-        throw new Error("Failed to fetch photographer");
-    }
-
-    return await response.json();
-};
-
-
-export const getPhotographerPosts = async (token, photographerId) => {
-    const response = await fetch(
-        `${API_BASE_URL}/posts/photographer/${photographerId}`,
-        {
-            method: "GET",
-            headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json"
-            }
-        }
-    );
-
-    if (!response.ok) {
-        throw new Error("Failed to fetch photographer posts");
-    }
-
-    return await response.json();
-};
-export const registerUser = async (userData) => {
-    const response = await fetch("http://localhost:5000/api/auth/register", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify(userData),
-    });
 
     const data = await response.json();
+
     if (!response.ok) {
-        throw new Error(data.message || "Signup failed");
+
+        throw new Error(
+            data.message ||
+            "Failed to fetch photographers"
+        );
+
     }
+
     return data;
 };
 
-export const createBooking = async (token, bookingData) => {
+
+// GET SINGLE PHOTOGRAPHER
+// ======================================================
+
+export const getPhotographerById = async (
+    token,
+    photographerId
+) => {
+
+    const response = await fetch(
+        `${API_BASE_URL}/photographers/${photographerId}`,
+        {
+            method: "GET",
+
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+
+        throw new Error(
+            data.message ||
+            "Failed to fetch photographer"
+        );
+
+    }
+
+    return data;
+};
+
+
+// GET PHOTOGRAPHER POSTS
+// ======================================================
+
+
+
+
+/* =========================
+   BOOKINGS
+========================= */
+
+export const createBooking = async (
+    token,
+    bookingData
+) => {
+
     const response = await fetch(
         `${API_BASE_URL}/bookings`,
         {
             method: "POST",
+
             headers: {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json"
             },
+
             body: JSON.stringify(bookingData)
         }
     );
@@ -168,13 +274,21 @@ export const createBooking = async (token, bookingData) => {
     const data = await response.json();
 
     if (!response.ok) {
+
         throw new Error(
-            data.message || "Failed to create booking"
+            data.message ||
+            "Failed to create booking"
         );
+
     }
 
     return data;
 };
+
+
+// ======================================================
+// CLIENT - MY BOOKINGS
+// ======================================================
 
 export const getMyBookings = async (token) => {
 
@@ -182,6 +296,7 @@ export const getMyBookings = async (token) => {
         `${API_BASE_URL}/bookings/my`,
         {
             method: "GET",
+
             headers: {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json"
@@ -192,16 +307,21 @@ export const getMyBookings = async (token) => {
     const data = await response.json();
 
     if (!response.ok) {
+
         throw new Error(
-            data.message || "Failed to fetch bookings"
+            data.message ||
+            "Failed to fetch bookings"
         );
+
     }
 
     return data;
 };
-// ==========================================
-// PHOTOGRAPHER BOOKINGS
-// ==========================================
+
+
+// ======================================================
+// PHOTOGRAPHER - BOOKINGS
+// ======================================================
 
 export const getPhotographerBookings = async (token) => {
 
@@ -209,6 +329,7 @@ export const getPhotographerBookings = async (token) => {
         `${API_BASE_URL}/bookings/photographer`,
         {
             method: "GET",
+
             headers: {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json"
@@ -219,25 +340,32 @@ export const getPhotographerBookings = async (token) => {
     const data = await response.json();
 
     if (!response.ok) {
+
         throw new Error(
-            data.message || "Failed to fetch photographer bookings"
+            data.message ||
+            "Failed to fetch photographer bookings"
         );
+
     }
 
     return data;
 };
 
 
-// ==========================================
+// ======================================================
 // ACCEPT BOOKING
-// ==========================================
+// ======================================================
 
-export const acceptBooking = async (token, bookingId) => {
+export const acceptBooking = async (
+    token,
+    bookingId
+) => {
 
     const response = await fetch(
         `${API_BASE_URL}/bookings/${bookingId}/accept`,
         {
             method: "PATCH",
+
             headers: {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json"
@@ -248,25 +376,31 @@ export const acceptBooking = async (token, bookingId) => {
     const data = await response.json();
 
     if (!response.ok) {
+
         throw new Error(
-            data.message || "Failed to accept booking"
+            data.message ||
+            "Failed to accept booking"
         );
+
     }
 
     return data;
 };
 
 
-// ==========================================
 // REJECT BOOKING
-// ==========================================
+// ======================================================
 
-export const rejectBooking = async (token, bookingId) => {
+export const rejectBooking = async (
+    token,
+    bookingId
+) => {
 
     const response = await fetch(
         `${API_BASE_URL}/bookings/${bookingId}/reject`,
         {
             method: "PATCH",
+
             headers: {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json"
@@ -277,19 +411,34 @@ export const rejectBooking = async (token, bookingId) => {
     const data = await response.json();
 
     if (!response.ok) {
+
         throw new Error(
-            data.message || "Failed to reject booking"
+            data.message ||
+            "Failed to reject booking"
         );
+
     }
 
     return data;
 };
 
-export const getMyPhotographerProfile = async (token) => {
+
+/* =========================
+   PHOTOGRAPHER PROFILE
+========================= */
+
+// GET MY PHOTOGRAPHER PROFILE
+// ======================================================
+
+export const getMyPhotographerProfile = async (
+    token
+) => {
+
     const response = await fetch(
         `${API_BASE_URL}/photographers/profile/me`,
         {
             method: "GET",
+
             headers: {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json"
@@ -300,26 +449,35 @@ export const getMyPhotographerProfile = async (token) => {
     const data = await response.json();
 
     if (!response.ok) {
+
         throw new Error(
-            data.message || "Failed to fetch photographer profile"
+            data.message ||
+            "Failed to fetch photographer profile"
         );
+
     }
 
     return data;
 };
 
+// ======================================================
+// UPDATE PHOTOGRAPHER PROFILE
+// ======================================================
 export const updatePhotographerProfile = async (
     token,
     profileData
 ) => {
+
     const response = await fetch(
         `${API_BASE_URL}/photographers/profile`,
         {
             method: "PUT",
+
             headers: {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json"
             },
+
             body: JSON.stringify(profileData)
         }
     );
@@ -327,62 +485,319 @@ export const updatePhotographerProfile = async (
     const data = await response.json();
 
     if (!response.ok) {
+
         throw new Error(
-            data.message || "Failed to update profile"
+            data.message ||
+            "Failed to update profile"
         );
+
     }
 
     return data;
 };
 
-export const getPhotographers = async (token, filters = {}) => {
-    const queryParams = new URLSearchParams();
+//----------------------------------------------------------------------------------------
+/* =====================================================
+   CREATE PHOTOGRAPHER POST
+===================================================== */
 
-    if (filters.search) queryParams.append("search", filters.search);
-    if (filters.location) queryParams.append("location", filters.location);
-    if (filters.specialization && filters.specialization !== "ALL") {
-        queryParams.append("specialization", filters.specialization);
-    }
-    if (filters.maxPrice) queryParams.append("maxPrice", filters.maxPrice);
+export const createPost = async (
+    token,
+    postData
+) => {
 
-    const endpoint = queryParams.toString() 
-        ? `${API_BASE_URL}/photographers?${queryParams.toString()}` 
-        : `${API_BASE_URL}/photographers`;
+    const response =
+        await fetch(
+            `${API_BASE_URL}/posts`,
+            {
+                method: "POST",
 
-    const response = await fetch(endpoint, {
-        method: "GET",
-        headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-        }
-    });
+                headers: {
+                    Authorization:
+                        `Bearer ${token}`,
+
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body:
+                    JSON.stringify(
+                        postData
+                    )
+            }
+        );
+
+
+    const data =
+        await response.json();
+
 
     if (!response.ok) {
-        throw new Error("Failed to fetch photographers");
+
+        throw new Error(
+            data.message ||
+            "Failed to create post"
+        );
+
     }
 
-    return await response.json();
+
+    return data;
+
 };
 
-// Add or verify this function in src/api/api.js
 
-export const getPhotographerProfile = async (photographerId) => {
-    try {
-        const response = await fetch(`http://localhost:5000/api/photographers/${photographerId}`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
+/* =====================================================
+   GET PHOTOGRAPHER POSTS
+===================================================== */
+
+export const getPhotographerPosts =
+    async (
+        token,
+        photographerId
+    ) => {
+
+        const response =
+            await fetch(
+                `${API_BASE_URL}/posts/photographer/${photographerId}`,
+                {
+                    method: "GET",
+
+                    headers: {
+                        Authorization:
+                            `Bearer ${token}`,
+
+                        "Content-Type":
+                            "application/json"
+                    }
+                }
+            );
+
+
+        const data =
+            await response.json();
+
 
         if (!response.ok) {
-            throw new Error("Failed to fetch photographer profile");
+
+            throw new Error(
+                data.message ||
+                "Failed to fetch photographer posts"
+            );
+
         }
 
-        const data = await response.json();
+
         return data;
+
+    };
+
+
+/* =====================================================
+   GET COMMENTS
+===================================================== */
+
+export const getComments =
+    async (
+        token,
+        postId
+    ) => {
+
+        const response =
+            await fetch(
+                `${API_BASE_URL}/posts/${postId}/comments`,
+                {
+                    method: "GET",
+
+                    headers: {
+                        Authorization:
+                            `Bearer ${token}`,
+
+                        "Content-Type":
+                            "application/json"
+                    }
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.message ||
+                "Failed to fetch comments"
+            );
+
+        }
+
+
+        return data;
+
+    };
+
+
+/* =====================================================
+   CREATE COMMENT
+===================================================== */
+
+export const createComment =
+    async (
+        token,
+        postId,
+        text
+    ) => {
+
+        const response =
+            await fetch(
+                `${API_BASE_URL}/posts/${postId}/comments`,
+                {
+                    method: "POST",
+
+                    headers: {
+                        Authorization:
+                            `Bearer ${token}`,
+
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+                            text
+                        })
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.message ||
+                "Failed to add comment"
+            );
+
+        }
+
+
+        return data;
+
+    };
+    /* =================================================
+   LIKE / UNLIKE POST
+================================================= */
+
+const handleLike = async (
+    postId
+) => {
+
+    try {
+
+        const token =
+            localStorage.getItem(
+                "token"
+            );
+
+
+        if (!token) {
+
+            return;
+
+        }
+
+
+        const data =
+            await toggleLike(
+                token,
+                postId
+            );
+
+
+        /*
+           Update main posts
+        */
+
+        setPosts(
+            previousPosts =>
+                previousPosts.map(
+                    post => {
+
+                        if (
+                            post._id ===
+                            postId
+                        ) {
+
+                            return {
+
+                                ...post,
+
+                                likes:
+                                    data.likes ||
+                                    post.likes,
+
+                                likedByMe:
+                                    data.likedByMe
+
+                            };
+
+                        }
+
+
+                        return post;
+
+                    }
+                )
+        );
+
+
+        /*
+           Update selected modal post
+        */
+
+        setSelectedPost(
+            previousPost => {
+
+                if (
+                    !previousPost ||
+                    previousPost._id !==
+                    postId
+                ) {
+
+                    return previousPost;
+
+                }
+
+
+                return {
+
+                    ...previousPost,
+
+                    likes:
+                        data.likes ||
+                        previousPost.likes,
+
+                    likedByMe:
+                        data.likedByMe
+
+                };
+
+            }
+        );
+
+
     } catch (error) {
-        console.error("Error in getPhotographerProfile:", error);
-        throw error;
+
+        console.error(
+            "Like Error:",
+            error
+        );
+
     }
+
 };
